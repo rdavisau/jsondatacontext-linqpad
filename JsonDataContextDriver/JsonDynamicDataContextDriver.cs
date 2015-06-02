@@ -1,12 +1,16 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using LINQPad.Extensibility.DataContext;
 using Microsoft.CSharp;
 using Newtonsoft.Json;
@@ -19,7 +23,7 @@ namespace JsonDataContextDriver
     {
         public override string Name
         {
-            get { return "JSON DataContext"; }
+            get { return "JSON DataContext Provider"; }
         }
 
         public override string Author
@@ -29,7 +33,7 @@ namespace JsonDataContextDriver
 
         public override string GetConnectionDescription(IConnectionInfo cxInfo)
         {
-            return cxInfo.DisplayName;
+            return String.IsNullOrWhiteSpace(cxInfo.DisplayName) ? "Unnamed JSON Data Context" : cxInfo.DisplayName;
         }
 
         public override bool ShowConnectionDialog(IConnectionInfo cxInfo, bool isNewConnection)
@@ -51,29 +55,19 @@ namespace JsonDataContextDriver
             var jss = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
             var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
 
-            var sanitiser = new Func<Func<string, string>>(() =>
-            {
-                var replacers = new [] {"\n", "'", " ", "*", "/", "-", "(", ")", ".", "!", "?", "#", ":", "+", "{", "}", "&", ","};
-                var tuples = replacers.Select(r => Tuple.Create(r, "_")).ToList();
-
-                return originalName =>
-                {
-                    var newName = originalName.ReplaceAll(tuples);
-                    if (char.IsNumber(newName[0]))
-                        newName = "_" + newName;
-
-                    return newName;
-                };
-            })();
-
             var ns = nameSpace;
 
             // generate class definitions
-            // sanitise class names
             var classDefinitions =
                 inputDefs
                     .SelectMany(i => GetClassesForInput(i, ns))
-                        .DoEach(c=> c.ClassName = sanitiser(c.ClassName))
+                    .ToList();
+
+            // remove the error'd inputs
+            var errors = classDefinitions.Where(c => !c.Success).ToList();
+            classDefinitions = 
+                classDefinitions
+                    .Where(c=> c.Success)
                     .ToList();
             
             // resolve duplicates
@@ -110,6 +104,13 @@ namespace JsonDataContextDriver
 
             var result = provider.CompileAssemblyFromSource(parameters, contextWithCode);
 
+            // Pray to the gods of UX for redemption..
+            // We Can Do Better
+            if(errors.Any())
+                MessageBox.Show(String.Format("Couldn't process {0} files:\r\n{1}", errors.Count,
+                    String.Join(Environment.NewLine,
+                        errors.Select(e => String.Format("{0} - {1}", e.DataFilePath, e.Error.Message)))));
+
             return LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
         }
 
@@ -121,66 +122,91 @@ namespace JsonDataContextDriver
                 GetFilesForInput(input)
                     .Select(f =>
                     {
-                        var fs = new FileStream(f, FileMode.Open);
-                        var sr = new StreamReader(fs);
-                        var jtr = new JsonTextReader(sr);
-                    
-                        var examples = 
-					        Enumerable
-						        .Range(0, numSamples)
-						        .Select(_=> 
-						        { 			
-							        while (jtr.Read())
-								        if (jtr.TokenType == JsonToken.StartObject)
-									        return JObject.Load(jtr).ToString();
-							        return null;
-						        })
-						        .Where(json => json != null);
-				
-				        var examplesJson = String.Format("[{0}]", String.Join(",\r\n", examples));
-				
-				        jtr.Close();
-				        sr.Close();
-				        fs.Close();
-				
-				        return new 
-				        { 
-					        ClassName = Path.GetFileNameWithoutExtension(f), 
-					        FilePath = f,
-					        Examples = examplesJson 
-				        }; 
-                    })
-                    .Select(s =>
-                    {
-                        var outputStream = new MemoryStream();
-                        var outputWriter = new StreamWriter(outputStream);
-
-                        var jsg = new JsonClassGenerator
+                        // TODO: Be a better error handler
+                        try
                         {
-                            Example = s.Examples,
-                            Namespace = nameSpace,
-                            MainClass = s.ClassName,
-                            OutputStream = outputWriter,
-                        };
+                            var fs = new FileStream(f, FileMode.Open);
+                            var sr = new StreamReader(fs);
+                            var jtr = new JsonTextReader(sr);
 
-                        jsg.GenerateClasses();
+                            var examples =
+                                Enumerable
+                                    .Range(0, numSamples)
+                                    .Select(_ =>
+                                    {
+                                        while (jtr.Read())
+                                            if (jtr.TokenType == JsonToken.StartObject)
+                                                return JObject.Load(jtr).ToString();
+                                        return null;
+                                    })
+                                    .Where(json => json != null);
 
-                        outputWriter.Flush();
-                        outputStream.Seek(0, SeekOrigin.Begin);
+                            var examplesJson = String.Format("[{0}]", String.Join(",\r\n", examples));
 
-                        var classDef = new StreamReader(outputStream)
-                                            .ReadToEnd()
-                                            .Replace("IList<", "List<")
-                                            .Replace(";\r\n", " { get; set; }\r\n");
+                            jtr.Close();
+                            sr.Close();
+                            fs.Close();
 
-                        classDef = classDef.Substring(classDef.IndexOf(String.Format("namespace {0}", nameSpace)));
+                            var sanitise = new Func<Func<string, string>>(() =>
+                            {
+                                var replacers = new[] { "\n", "'", " ", "*", "/", "-", "(", ")", ".", "!", "?", "#", ":", "+", "{", "}", "&", "," };
+                                var tuples = replacers.Select(r => Tuple.Create(r, "_")).ToList();
 
-                        return new GeneratedClass
+                                return originalName =>
+                                {
+                                    var newName = originalName.ReplaceAll(tuples);
+                                    if (char.IsNumber(newName[0]))
+                                        newName = "_" + newName;
+
+                                    return newName;
+                                };
+                            })();
+
+                            var className = sanitise(Path.GetFileNameWithoutExtension(f));
+
+                            var outputStream = new MemoryStream();
+                            var outputWriter = new StreamWriter(outputStream);
+
+                            var jsg = new JsonClassGenerator
+                            {
+                                Example = examplesJson,
+                                Namespace = nameSpace,
+                                MainClass = className,
+                                OutputStream = outputWriter,
+                                NoHelperClass = true
+                            };
+
+                            jsg.GenerateClasses();
+
+                            outputWriter.Flush();
+                            outputStream.Seek(0, SeekOrigin.Begin);
+
+                            var classDef = new StreamReader(outputStream)
+                                .ReadToEnd()
+                                .Replace("IList<", "List<")
+                                .Replace(";\r\n", " { get; set; }\r\n");
+
+                            classDef =
+                                classDef.Substring(classDef.IndexOf(String.Format("namespace {0}", nameSpace),
+                                    StringComparison.Ordinal));
+
+                            return new GeneratedClass
+                            {
+                                ClassName = className,
+                                DataFilePath = f,
+                                ClassDefinition = classDef,
+                                Success = true
+                            };
+                        }
+                        catch (Exception e)
                         {
-                            ClassName = s.ClassName,
-                            DataFilePath = s.FilePath,
-                            ClassDefinition = classDef
-                        };
+                            return new GeneratedClass
+                            {
+                                DataFilePath = f,
+                                Success = false,
+                                Error = e
+                            };
+                        }
                     })
                 .ToList();
         }
@@ -198,6 +224,6 @@ namespace JsonDataContextDriver
             }
         }
 
-
+       
     }
 }

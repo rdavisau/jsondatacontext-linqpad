@@ -1,6 +1,6 @@
-﻿using ReactiveUI;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +11,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Navigation;
 using System.IO;
+using System.Windows.Media;
 using LINQPad.Extensibility.DataContext;
 using Newtonsoft.Json;
 
@@ -18,48 +19,89 @@ namespace JsonDataContextDriver
 {
     public partial class ConnectionDialog
     {
-        private IConnectionInfo _connectionInfo; 
-        private readonly ReactiveList<JsonInput> _jsonInputs = new ReactiveList<JsonInput>();
+        private IConnectionInfo _connectionInfo;
+        private readonly ObservableCollection<JsonInput> _jsonInputs = new ObservableCollection<JsonInput>();
+        private readonly SolidColorBrush _highlightedBrush = new SolidColorBrush(Colors.LightBlue);
+        private readonly SolidColorBrush _standardBrush = new SolidColorBrush(Colors.White);
 
         public ConnectionDialog()
         {
-            _jsonInputs = new ReactiveList<JsonInput>
-            {
-                new JsonInput { InputPath = @"C:\Ryan", Mask = "*.json", Recursive = true },
-                new JsonInput { InputPath = @"C:\Windows", Mask = "*.*", Recursive = false }
-            };
-
             InitializeComponent();
 
-            Inputs.ItemsSource = _jsonInputs;
-        }
+            RemoveButton.Click += (sender, args) =>
+            {
+                var input = InputsListView.SelectedItem as JsonInput;
 
-        public ConnectionDialog(IConnectionInfo cxInfo) : base()
-        {
-            // blah blah blah
-        }
+                if (input == null)
+                    return;
 
-        private void Inputs_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            var newInput = new JsonInput();
-            _jsonInputs.Add(newInput);
+                _jsonInputs.Remove(input);
+            };
 
-            Inputs.SelectedItem = newInput;
+            NewFileMenuItem.MouseUp += (sender, args) =>
+            {
+                var dialog = new AddNewFileSourceDialog() { Owner = this };
+                var result = dialog.ShowDialog();
+
+                if (!(result.HasValue && result.Value))
+                    return;
+
+                _jsonInputs.Add(dialog.Input);
+            };
+
+            NewFolderMenuItem.MouseUp += (sender, args) =>
+            {
+                var dialog = new AddNewFolderSourceDialog { Owner = this };
+                var result = dialog.ShowDialog();
+
+                if (!(result.HasValue && result.Value))
+                    return;
+
+                _jsonInputs.Add(dialog.Input);
+            };
+
+            NewWebMenuItem.MouseUp += (sender, args) => MessageBox.Show("NOT IMPLEMENTED, EXCEPTION! >:O");
+
+            foreach (var panel in new[] { (DockPanel)NewFileMenuItem.Parent, (DockPanel)NewFolderMenuItem.Parent, (DockPanel)NewWebMenuItem.Parent })
+            {
+                var p = panel;
+                p.MouseEnter += (sender, args) => p.Background = _highlightedBrush;
+                p.MouseLeave += (sender, args) => p.Background = _standardBrush;
+            }
+
+            CancelButton.Click += (sender, args) => DialogResult = false;
+
+            OkButton.Click += (sender, args) =>
+            {
+                var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
+                var inputDefs = JsonConvert.SerializeObject(_jsonInputs.ToList(), jss);
+
+                _connectionInfo.DisplayName = ConnectionNameTextBox.Text;
+                _connectionInfo.DriverData.SetElementValue("inputDefs", inputDefs);
+
+                DialogResult = true;
+            };
+
+            _jsonInputs.CollectionChanged += (sender, args) => OkButton.IsEnabled = _jsonInputs.Count > 0;
+
+            InputsListView.ItemsSource = _jsonInputs;
         }
 
         public void SetContext(IConnectionInfo cxInfo, bool isNewConnection)
         {
             _connectionInfo = cxInfo;
-        }
+            
+            ConnectionNameTextBox.Text = _connectionInfo.DisplayName;
 
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
+            var xInputs = cxInfo.DriverData.Element("inputDefs");
+            if (xInputs == null) return;
+
             var jss = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
-            var inputDefs = JsonConvert.SerializeObject(_jsonInputs.ToList(), jss);
+            var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
 
-            _connectionInfo.DriverData.SetElementValue("inputDefs", inputDefs);
-
-            DialogResult = true;
+            _jsonInputs.Clear();
+            inputDefs.ForEach(_jsonInputs.Add);
         }
     }
+
 }
