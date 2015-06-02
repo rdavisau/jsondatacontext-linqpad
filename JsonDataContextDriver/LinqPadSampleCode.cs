@@ -18,14 +18,12 @@ namespace JsonDataContextDriver
             var topLevelProps =
                 (
                     from prop in customType.GetProperties()
-                    where prop.PropertyType != typeof(string)
+                    where prop.PropertyType != typeof (string)
 
                     // Display all properties of type IEnumerable<T> (except for string!)
                     let ienumerableOfT = prop.PropertyType.GetInterface("System.Collections.Generic.IEnumerable`1")
                     where ienumerableOfT != null
-
                     orderby prop.Name
-
                     select new ExplorerItem(prop.Name, ExplorerItemKind.QueryableObject, ExplorerIcon.Table)
                     {
                         IsEnumerable = true,
@@ -34,16 +32,15 @@ namespace JsonDataContextDriver
                         // Store the entity type to the Tag property. We'll use it later.
                         Tag = ienumerableOfT.GetGenericArguments()[0]
                     }
-
                     ).ToList();
 
             // Create a lookup keying each element type to the properties of that type. This will allow
             // us to build hyperlink targets allowing the user to click between associations:
-            var elementTypeLookup = topLevelProps.ToLookup(tp => (Type)tp.Tag);
+            var elementTypeLookup = topLevelProps.ToLookup(tp => (Type) tp.Tag);
 
             // Populate the columns (properties) of each entity:
             foreach (ExplorerItem table in topLevelProps)
-                table.Children = ((Type)table.Tag)
+                table.Children = ((Type) table.Tag)
                     .GetProperties()
                     .Select(childProp => GetChildItem(elementTypeLookup, childProp))
                     .OrderBy(childItem => childItem.Kind)
@@ -52,7 +49,7 @@ namespace JsonDataContextDriver
             return topLevelProps;
         }
 
-        static ExplorerItem GetChildItem(ILookup<Type, ExplorerItem> elementTypeLookup, PropertyInfo childProp)
+        private static ExplorerItem GetChildItem(ILookup<Type, ExplorerItem> elementTypeLookup, PropertyInfo childProp)
         {
             // If the property's type is in our list of entities, then it's a Many:1 (or 1:1) reference.
             // We'll assume it's a Many:1 (we can't reliably identify 1:1s purely from reflection).

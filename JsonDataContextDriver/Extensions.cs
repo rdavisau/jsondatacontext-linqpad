@@ -10,7 +10,7 @@ namespace JsonDataContextDriver
         {
             foreach (var repl in replacements)
                 s = s.Replace(repl.Item1, repl.Item2);
-		
+
             return s;
         }
 
@@ -22,6 +22,5 @@ namespace JsonDataContextDriver
                 yield return item;
             }
         }
-
     }
 }

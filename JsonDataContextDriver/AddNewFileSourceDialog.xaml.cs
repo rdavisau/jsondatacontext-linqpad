@@ -21,8 +21,8 @@ namespace JsonDataContextDriver
     public partial class AddNewFileSourceDialog : Window
     {
         private readonly SolidColorBrush _goodBrush = new SolidColorBrush(Colors.White);
-        private readonly SolidColorBrush _badBrush = new SolidColorBrush(Colors.IndianRed) { Opacity = .5 };
-        
+        private readonly SolidColorBrush _badBrush = new SolidColorBrush(Colors.IndianRed) {Opacity = .5};
+
         private readonly JsonInput _input;
 
         public JsonInput Input { get; set; }
@@ -47,7 +47,7 @@ namespace JsonDataContextDriver
 
                 PathTextBox.Background = pathOk ? _goodBrush : _badBrush;
                 NumRowsToSampleTextBox.Background = countOk ? _goodBrush : _badBrush;
-            }; 
+            };
 
             PathTextBox.TextChanged += (sender, args) => doValidation();
             NumRowsToSampleTextBox.TextChanged += (sender, args) => doValidation();
@@ -56,18 +56,18 @@ namespace JsonDataContextDriver
             {
                 var fileDialog = new OpenFileDialog
                 {
-                    Multiselect = false, 
+                    Multiselect = false,
                     CheckFileExists = true,
                 };
-                
+
                 var result = fileDialog.ShowDialog();
-                
+
                 if (result.HasValue && result.Value)
                     PathTextBox.Text = fileDialog.FileName;
             };
 
             CancelButton.Click += (sender, args) => DialogResult = false;
-            OkButton.Click += (sender, args) => 
+            OkButton.Click += (sender, args) =>
             {
                 _input.InputPath = PathTextBox.Text;
                 _input.NumRowsToSample = Math.Max(0, Int32.Parse(NumRowsToSampleTextBox.Text));

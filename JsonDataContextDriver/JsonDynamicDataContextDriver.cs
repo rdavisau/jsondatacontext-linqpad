@@ -45,14 +45,15 @@ namespace JsonDataContextDriver
             return result == true;
         }
 
-        public override List<ExplorerItem> GetSchemaAndBuildAssembly(IConnectionInfo cxInfo, AssemblyName assemblyToBuild, ref string nameSpace,
+        public override List<ExplorerItem> GetSchemaAndBuildAssembly(IConnectionInfo cxInfo,
+            AssemblyName assemblyToBuild, ref string nameSpace,
             ref string typeName)
         {
             var xInputs = cxInfo.DriverData.Element("inputDefs");
             if (xInputs == null)
                 return new List<ExplorerItem>();
 
-            var jss = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+            var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
             var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
 
             var ns = nameSpace;
@@ -65,18 +66,18 @@ namespace JsonDataContextDriver
 
             // remove the error'd inputs
             var errors = classDefinitions.Where(c => !c.Success).ToList();
-            classDefinitions = 
+            classDefinitions =
                 classDefinitions
-                    .Where(c=> c.Success)
+                    .Where(c => c.Success)
                     .ToList();
-            
+
             // resolve duplicates
             classDefinitions
-                .GroupBy(c=> c.ClassName)
-                .Where(c=> c.Count() > 1)
-                .SelectMany(cs => cs.Select((c,i) => new { Class = c, Index = i +1 }).Skip(1))
+                .GroupBy(c => c.ClassName)
+                .Where(c => c.Count() > 1)
+                .SelectMany(cs => cs.Select((c, i) => new {Class = c, Index = i + 1}).Skip(1))
                 .ToList()
-                .ForEach(c=> c.Class.ClassName += "_" + c.Index);
+                .ForEach(c => c.Class.ClassName += "_" + c.Index);
 
             // create code to compile
             var usings = "using System;\r\n" +
@@ -84,41 +85,50 @@ namespace JsonDataContextDriver
                          "using System.IO;\r\n" +
                          "using Newtonsoft.Json;\r\n";
 
-            var contextProperties = classDefinitions.Select(c => String.Format("public List<{0}> {1}s {{ get {{ return JsonConvert.DeserializeObject<List<{0}>>(File.ReadAllText(@\"{2}\")); }} }}", c.ClassName, c.ClassName, c.DataFilePath));
+            var contextProperties =
+                classDefinitions.Select(
+                    c =>
+                        String.Format(
+                            "public List<{0}> {1}s {{ get {{ return JsonConvert.DeserializeObject<List<{0}>>(File.ReadAllText(@\"{2}\")); }} }}",
+                            c.ClassName, c.ClassName, c.DataFilePath));
 
-            var context = String.Format("namespace {1} {{\r\n\r\n public class {2} {{\r\n\r\n\t\t{0}\r\n\r\n}}\r\n\r\n}}", String.Join("\r\n\r\n\t\t", contextProperties), nameSpace, typeName);
+            var context =
+                String.Format("namespace {1} {{\r\n\r\n public class {2} {{\r\n\r\n\t\t{0}\r\n\r\n}}\r\n\r\n}}",
+                    String.Join("\r\n\r\n\t\t", contextProperties), nameSpace, typeName);
             var code = String.Join("\r\n", classDefinitions.Select(c => c.ClassDefinition));
 
             var contextWithCode = String.Join("\r\n\r\n", usings, context, code);
-            
+
             var provider = new CSharpCodeProvider();
             var parameters = new CompilerParameters
             {
-                IncludeDebugInformation = true, 
+                IncludeDebugInformation = true,
                 OutputAssembly = assemblyToBuild.CodeBase,
-                ReferencedAssemblies = 
-		        {
-			        typeof(JsonConvert).Assembly.Location
-		        }
+                ReferencedAssemblies =
+                {
+                    typeof (JsonConvert).Assembly.Location
+                }
             };
 
             var result = provider.CompileAssemblyFromSource(parameters, contextWithCode);
 
             // Pray to the gods of UX for redemption..
             // We Can Do Better
-            if(errors.Any())
+            if (errors.Any())
                 MessageBox.Show(String.Format("Couldn't process {0} files:\r\n{1}", errors.Count,
                     String.Join(Environment.NewLine,
                         errors.Select(e => String.Format("{0} - {1}", e.DataFilePath, e.Error.Message)))));
 
-            return LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
+            return
+                LinqPadSampleCode.GetSchema(
+                    result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
         }
 
         public List<GeneratedClass> GetClassesForInput(JsonInput input, string nameSpace)
         {
             var numSamples = input.NumRowsToSample;
 
-            return 
+            return
                 GetFilesForInput(input)
                     .Select(f =>
                     {
@@ -149,7 +159,11 @@ namespace JsonDataContextDriver
 
                             var sanitise = new Func<Func<string, string>>(() =>
                             {
-                                var replacers = new[] { "\n", "'", " ", "*", "/", "-", "(", ")", ".", "!", "?", "#", ":", "+", "{", "}", "&", "," };
+                                var replacers = new[]
+                                {
+                                    "\n", "'", " ", "*", "/", "-", "(", ")", ".", "!", "?", "#", ":", "+", "{", "}", "&",
+                                    ","
+                                };
                                 var tuples = replacers.Select(r => Tuple.Create(r, "_")).ToList();
 
                                 return originalName =>
@@ -208,7 +222,7 @@ namespace JsonDataContextDriver
                             };
                         }
                     })
-                .ToList();
+                    .ToList();
         }
 
         public List<string> GetFilesForInput(JsonInput input)
@@ -216,14 +230,14 @@ namespace JsonDataContextDriver
             switch (input.InputType)
             {
                 case JsonInputType.File:
-                    return new List<string> { input.InputPath };
+                    return new List<string> {input.InputPath};
                 case JsonInputType.Directory:
-                    return Directory.GetFiles(input.InputPath, input.Mask, input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).ToList();
+                    return
+                        Directory.GetFiles(input.InputPath, input.Mask,
+                            input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).ToList();
                 default:
                     return new List<string>();
             }
         }
-
-       
     }
 }

@@ -40,7 +40,7 @@ namespace JsonDataContextDriver
 
             NewFileMenuItem.MouseUp += (sender, args) =>
             {
-                var dialog = new AddNewFileSourceDialog() { Owner = this };
+                var dialog = new AddNewFileSourceDialog() {Owner = this};
                 var result = dialog.ShowDialog();
 
                 if (!(result.HasValue && result.Value))
@@ -51,7 +51,7 @@ namespace JsonDataContextDriver
 
             NewFolderMenuItem.MouseUp += (sender, args) =>
             {
-                var dialog = new AddNewFolderSourceDialog { Owner = this };
+                var dialog = new AddNewFolderSourceDialog {Owner = this};
                 var result = dialog.ShowDialog();
 
                 if (!(result.HasValue && result.Value))
@@ -62,7 +62,13 @@ namespace JsonDataContextDriver
 
             NewWebMenuItem.MouseUp += (sender, args) => MessageBox.Show("NOT IMPLEMENTED, EXCEPTION! >:O");
 
-            foreach (var panel in new[] { (DockPanel)NewFileMenuItem.Parent, (DockPanel)NewFolderMenuItem.Parent, (DockPanel)NewWebMenuItem.Parent })
+            foreach (
+                var panel in
+                    new[]
+                    {
+                        (DockPanel) NewFileMenuItem.Parent, (DockPanel) NewFolderMenuItem.Parent,
+                        (DockPanel) NewWebMenuItem.Parent
+                    })
             {
                 var p = panel;
                 p.MouseEnter += (sender, args) => p.Background = _highlightedBrush;
@@ -90,18 +96,17 @@ namespace JsonDataContextDriver
         public void SetContext(IConnectionInfo cxInfo, bool isNewConnection)
         {
             _connectionInfo = cxInfo;
-            
+
             ConnectionNameTextBox.Text = _connectionInfo.DisplayName;
 
             var xInputs = cxInfo.DriverData.Element("inputDefs");
             if (xInputs == null) return;
 
-            var jss = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+            var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
             var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
 
             _jsonInputs.Clear();
             inputDefs.ForEach(_jsonInputs.Add);
         }
     }
-
 }

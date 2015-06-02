@@ -34,7 +34,10 @@ namespace JsonDataContextDriver
             }
         }
 
-        public bool IsDirectory { get { return InputType == JsonInputType.Directory; } }
+        public bool IsDirectory
+        {
+            get { return InputType == JsonInputType.Directory; }
+        }
 
         public JsonInput()
         {
@@ -53,6 +56,5 @@ namespace JsonDataContextDriver
                     return "ERR";
             }
         }
-
     }
 }
