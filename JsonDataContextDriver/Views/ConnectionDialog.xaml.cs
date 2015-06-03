@@ -40,7 +40,7 @@ namespace JsonDataContextDriver
 
             NewFileMenuItem.MouseUp += (sender, args) =>
             {
-                var dialog = new AddNewFileSourceDialog() {Owner = this};
+                var dialog = new AddNewFileSourceDialog() { Owner = this };
                 var result = dialog.ShowDialog();
 
                 if (!(result.HasValue && result.Value))
@@ -51,7 +51,7 @@ namespace JsonDataContextDriver
 
             NewFolderMenuItem.MouseUp += (sender, args) =>
             {
-                var dialog = new AddNewFolderSourceDialog {Owner = this};
+                var dialog = new AddNewFolderSourceDialog { Owner = this };
                 var result = dialog.ShowDialog();
 
                 if (!(result.HasValue && result.Value))
@@ -88,9 +88,32 @@ namespace JsonDataContextDriver
                 DialogResult = true;
             };
 
-            _jsonInputs.CollectionChanged += (sender, args) => OkButton.IsEnabled = _jsonInputs.Count > 0;
+            InputsListView.MouseDoubleClick += (sender, args) =>
+            {
+                var selectedItem = InputsListView.SelectedItem as JsonInput;
+
+                if (selectedItem == null)
+                    return;
+
+                if (selectedItem.IsDirectory)
+                {
+                    var dialog = new AddNewFolderSourceDialog(selectedItem) { Owner = this };
+                    dialog.ShowDialog();
+                }
+                else
+                {
+                    var dialog = new AddNewFileSourceDialog(selectedItem) { Owner = this };
+                    dialog.ShowDialog();
+                }
+                
+            };
+
+            Action checkCanOk = () => OkButton.IsEnabled = _jsonInputs.Count > 0;
+
+            _jsonInputs.CollectionChanged += (sender, args) => checkCanOk();
 
             InputsListView.ItemsSource = _jsonInputs;
+            checkCanOk();
         }
 
         public void SetContext(IConnectionInfo cxInfo, bool isNewConnection)

@@ -87,35 +87,35 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddNewFolderSourceDialog.xaml.cs">
+    <Compile Include="Views\AddNewFolderSourceDialog.xaml.cs">
       <DependentUpon>AddNewFolderSourceDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="AddNewFileSourceDialog.xaml.cs">
+    <Compile Include="Views\AddNewFileSourceDialog.xaml.cs">
       <DependentUpon>AddNewFileSourceDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Extensions.cs" />
-    <Compile Include="FolderSelectDialog\FolderSelectDialog.cs" />
-    <Compile Include="FolderSelectDialog\Reflector.cs" />
+    <Compile Include="Extensions\Extensions.cs" />
+    <Compile Include="Extensions\FolderSelectDialog\FolderSelectDialog.cs" />
+    <Compile Include="Extensions\FolderSelectDialog\Reflector.cs" />
     <Compile Include="GeneratedClass.cs" />
     <Compile Include="JsonDynamicDataContextDriver.cs" />
-    <Compile Include="ConnectionDialog.xaml.cs">
+    <Compile Include="Views\ConnectionDialog.xaml.cs">
       <DependentUpon>ConnectionDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="JsonInput.cs" />
     <Compile Include="JsonInputType.cs" />
-    <Compile Include="LinqPadSampleCode.cs" />
+    <Compile Include="Extensions\LinqPadSampleCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Page Include="AddNewFolderSourceDialog.xaml">
+    <Page Include="Views\AddNewFolderSourceDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="AddNewFileSourceDialog.xaml">
+    <Page Include="Views\AddNewFileSourceDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ConnectionDialog.xaml">
+    <Page Include="Views\ConnectionDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -125,7 +125,7 @@
     <None Include="DevDeploy.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="FolderSelectDialog\README.md" />
+    <None Include="Extensions\FolderSelectDialog\README.md" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +136,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="CodeGen\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

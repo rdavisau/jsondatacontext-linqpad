@@ -76,7 +76,7 @@ namespace JsonDataContextDriver
             doValidation();
         }
 
-        public AddNewFolderSourceDialog(JsonInput input)
+        public AddNewFolderSourceDialog(JsonInput input) : this()
         {
             _input = input;
 

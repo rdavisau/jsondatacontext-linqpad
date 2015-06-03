@@ -79,7 +79,7 @@ namespace JsonDataContextDriver
             doValidation();
         }
 
-        public AddNewFileSourceDialog(JsonInput input)
+        public AddNewFileSourceDialog(JsonInput input) : this()
         {
             _input = input;
 
