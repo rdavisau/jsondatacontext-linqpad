@@ -1,6 +1,6 @@
 # JSON Data Context Driver for LINQPad
 
-A LINQPad dynamic data context driver for JSON data. See [here](http://ryandavis.io/a-json-data-context-driver-for-linqpad/) for an overview.
+A dynamic data context driver for querying JSON data with LINQPad. See [here](http://ryandavis.io/a-json-data-context-driver-for-linqpad/) for an overview.
 
 ![](http://ryandavis.io/content/images/2015/06/cxn_dialog.png)
 ![](http://ryandavis.io/content/images/2015/06/json_context-1.png)
