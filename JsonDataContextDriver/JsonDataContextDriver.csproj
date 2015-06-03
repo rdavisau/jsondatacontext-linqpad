@@ -37,7 +37,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>%40rdavisau.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>JsonDataContextDriver.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LINQPad">
@@ -121,11 +121,11 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <None Include="%40rdavisau.snk" />
     <None Include="DevDeploy.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Extensions\FolderSelectDialog\README.md" />
+    <None Include="JsonDataContextDriver.snk" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

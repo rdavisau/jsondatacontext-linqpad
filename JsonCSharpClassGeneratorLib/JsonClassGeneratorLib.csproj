@@ -37,7 +37,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>%40rdavisau.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>JsonDataContextDriver.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -74,11 +74,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="%40rdavisau.snk" />
     <None Include="JsonClassHelper.cs" />
     <Compile Include="JsonType.cs" />
     <Compile Include="JsonTypeEnum.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="JsonDataContextDriver.snk" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
