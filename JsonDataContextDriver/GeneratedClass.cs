@@ -4,6 +4,7 @@ namespace JsonDataContextDriver
 {
     public class GeneratedClass
     {
+        public string Namespace { get; set; }
         public string ClassName { get; set; }
         public string DataFilePath { get; set; }
         public string ClassDefinition { get; set; }

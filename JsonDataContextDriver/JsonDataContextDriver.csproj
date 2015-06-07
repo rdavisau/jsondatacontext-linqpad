@@ -87,6 +87,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\NotepadHelper.cs" />
     <Compile Include="Views\AddNewFolderSourceDialog.xaml.cs">
       <DependentUpon>AddNewFolderSourceDialog.xaml</DependentUpon>
     </Compile>

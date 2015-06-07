@@ -1,21 +1,18 @@
 ﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
+using System.Windows.Input;
+using JsonDataContextDriver.Notepad;
 using LINQPad.Extensibility.DataContext;
 using Microsoft.CSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xamasoft.JsonClassGenerator;
+using MessageBox = System.Windows.MessageBox;
 
 namespace JsonDataContextDriver
 {
@@ -65,7 +62,7 @@ namespace JsonDataContextDriver
                     .ToList();
 
             // remove the error'd inputs
-            var errors = classDefinitions.Where(c => !c.Success).ToList();
+            var classGenErrors = classDefinitions.Where(c => !c.Success).ToList();
             classDefinitions =
                 classDefinitions
                     .Where(c => c.Success)
@@ -89,8 +86,8 @@ namespace JsonDataContextDriver
                 classDefinitions.Select(
                     c =>
                         String.Format(
-                            "public List<{0}> {1}s {{ get {{ return JsonConvert.DeserializeObject<List<{0}>>(File.ReadAllText(@\"{2}\")); }} }}",
-                            c.ClassName, c.ClassName, c.DataFilePath));
+                            "public List<{0}.{1}> {2}s {{ get {{ return JsonConvert.DeserializeObject<List<{0}.{1}>>(File.ReadAllText(@\"{3}\")); }} }}",
+                            c.Namespace, c.ClassName, c.ClassName, c.DataFilePath));
 
             var context =
                 String.Format("namespace {1} {{\r\n\r\n public class {2} {{\r\n\r\n\t\t{0}\r\n\r\n}}\r\n\r\n}}",
@@ -112,16 +109,40 @@ namespace JsonDataContextDriver
 
             var result = provider.CompileAssemblyFromSource(parameters, contextWithCode);
 
-            // Pray to the gods of UX for redemption..
-            // We Can Do Better
-            if (errors.Any())
-                MessageBox.Show(String.Format("Couldn't process {0} files:\r\n{1}", errors.Count,
-                    String.Join(Environment.NewLine,
-                        errors.Select(e => String.Format("{0} - {1}", e.DataFilePath, e.Error.Message)))));
+            if (!result.Errors.HasErrors)
+            {
+                // Pray to the gods of UX for redemption..
+                // We Can Do Better
+                if (classGenErrors.Any())
+                    MessageBox.Show(String.Format("Couldn't process {0} files:\r\n{1}", classGenErrors.Count,
+                        String.Join(Environment.NewLine,
+                            classGenErrors.Select(e => String.Format("{0} - {1}", e.DataFilePath, e.Error.Message)))));
 
-            return
-                LinqPadSampleCode.GetSchema(
-                    result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
+                return
+                    LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
+            }
+            else
+            {
+                // compile failed, this is Bad
+                var sb = new StringBuilder();
+                sb.AppendLine("Could not generate a typed context for the given inputs. The compiler returned the following errors:\r\n");
+
+                foreach (var err in result.Errors)
+                    sb.AppendFormat(" - {0}\r\n", err);
+
+                if (classGenErrors.Any())
+                {
+                    sb.AppendLine("\r\nThis may have been caused by the following class generation errors:\r\n");
+                    sb.AppendLine(String.Join(Environment.NewLine, classGenErrors.Select(e => String.Format("  {0} - {1}", e.DataFilePath, e.Error.Message))));
+                }
+
+                MessageBox.Show(sb.ToString());
+
+                if (Keyboard.Modifiers == ModifierKeys.Shift)
+                    NotepadHelper.ShowMessage(contextWithCode, "Generated source code");
+
+                throw new Exception("Could not generate a typed context for the given inputs");
+            }
         }
 
         public List<GeneratedClass> GetClassesForInput(JsonInput input, string nameSpace)
@@ -177,17 +198,17 @@ namespace JsonDataContextDriver
                             })();
 
                             var className = sanitise(Path.GetFileNameWithoutExtension(f));
-
+                            var finalNamespace = nameSpace + "." + className + "Input";
                             var outputStream = new MemoryStream();
                             var outputWriter = new StreamWriter(outputStream);
 
                             var jsg = new JsonClassGenerator
                             {
                                 Example = examplesJson,
-                                Namespace = nameSpace,
+                                Namespace = finalNamespace,
                                 MainClass = className,
                                 OutputStream = outputWriter,
-                                NoHelperClass = true
+                                NoHelperClass = true,
                             };
 
                             jsg.GenerateClasses();
@@ -206,6 +227,7 @@ namespace JsonDataContextDriver
 
                             return new GeneratedClass
                             {
+                                Namespace = finalNamespace,
                                 ClassName = className,
                                 DataFilePath = f,
                                 ClassDefinition = classDef,
@@ -240,4 +262,5 @@ namespace JsonDataContextDriver
             }
         }
     }
+
 }
