@@ -49,10 +49,20 @@ namespace JsonDataContextDriver
                 .Concat(new[] {typeof (JsonDataContextBase).Assembly.Location});
         }
 
+        public override IEnumerable<string> GetNamespacesToAdd(IConnectionInfo cxInfo)
+        {
+            return base.GetNamespacesToAdd(cxInfo)
+                .Concat(_nameSpacesToAdd);
+        }
+
+        private List<string> _nameSpacesToAdd = new List<string>();
+
         public override List<ExplorerItem> GetSchemaAndBuildAssembly(IConnectionInfo cxInfo,
             AssemblyName assemblyToBuild, ref string nameSpace,
             ref string typeName)
         {
+            _nameSpacesToAdd = new List<string>();
+
             var xInputs = cxInfo.DriverData.Element("inputDefs");
             if (xInputs == null)
                 return new List<ExplorerItem>();
@@ -233,6 +243,8 @@ namespace JsonDataContextDriver
                             classDef =
                                 classDef.Substring(classDef.IndexOf(String.Format("namespace {0}", nameSpace),
                                     StringComparison.Ordinal));
+
+                            _nameSpacesToAdd.Add(finalNamespace);
 
                             return new GeneratedClass
                             {
