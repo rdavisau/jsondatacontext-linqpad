@@ -134,6 +134,10 @@
       <Project>{7bef7eaa-de37-40fb-bd33-3def0685031f}</Project>
       <Name>JsonClassGeneratorLib</Name>
     </ProjectReference>
+    <ProjectReference Include="..\JsonDataContextBase\JsonDataContextBase.csproj">
+      <Project>{687d854f-db1b-4ff4-8efd-91483341a150}</Project>
+      <Name>JsonDataContextBase</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="FodyWeavers.xml" />

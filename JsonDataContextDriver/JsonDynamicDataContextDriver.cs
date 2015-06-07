@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Windows.Input;
+using JsonDataContext;
 using JsonDataContextDriver.Notepad;
 using LINQPad.Extensibility.DataContext;
 using Microsoft.CSharp;
@@ -40,6 +41,12 @@ namespace JsonDataContextDriver
 
             var result = dialog.ShowDialog();
             return result == true;
+        }
+
+        public override IEnumerable<string> GetAssembliesToAdd(IConnectionInfo cxInfo)
+        {
+            return base.GetAssembliesToAdd(cxInfo)
+                .Concat(new[] {typeof (JsonDataContextBase).Assembly.Location});
         }
 
         public override List<ExplorerItem> GetSchemaAndBuildAssembly(IConnectionInfo cxInfo,
@@ -80,17 +87,18 @@ namespace JsonDataContextDriver
             var usings = "using System;\r\n" +
                          "using System.Collections.Generic;\r\n" +
                          "using System.IO;\r\n" +
-                         "using Newtonsoft.Json;\r\n";
+                         "using Newtonsoft.Json;\r\n" +
+                         "using JsonDataContext;\r\n";
 
             var contextProperties =
                 classDefinitions.Select(
                     c =>
                         String.Format(
-                            "public List<{0}.{1}> {2}s {{ get {{ return JsonConvert.DeserializeObject<List<{0}.{1}>>(File.ReadAllText(@\"{3}\")); }} }}",
+                            "public IEnumerable<{0}.{1}> {2}s {{ get {{ return DeserializeSequenceFromJsonFile<{0}.{1}>(@\"{3}\"); }} }}",
                             c.Namespace, c.ClassName, c.ClassName, c.DataFilePath));
 
             var context =
-                String.Format("namespace {1} {{\r\n\r\n public class {2} {{\r\n\r\n\t\t{0}\r\n\r\n}}\r\n\r\n}}",
+                String.Format("namespace {1} {{\r\n\r\n public class {2} : JsonDataContextBase {{\r\n\r\n\t\t{0}\r\n\r\n}}\r\n\r\n}}",
                     String.Join("\r\n\r\n\t\t", contextProperties), nameSpace, typeName);
             var code = String.Join("\r\n", classDefinitions.Select(c => c.ClassDefinition));
 
@@ -103,6 +111,7 @@ namespace JsonDataContextDriver
                 OutputAssembly = assemblyToBuild.CodeBase,
                 ReferencedAssemblies =
                 {
+                    typeof (JsonDataContextBase).Assembly.Location,
                     typeof (JsonConvert).Assembly.Location
                 }
             };

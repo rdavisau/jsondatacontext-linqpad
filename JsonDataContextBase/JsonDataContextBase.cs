@@ -1,23 +1,30 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 
 namespace JsonDataContext
 {
-    public class JsonDataContextBase<TLocation>
+    public class JsonDataContextBase
     {
-        protected Dictionary<TLocation, string> LocationPaths;
-
-        public void Save<T>(IEnumerable<T> items, TLocation location, JsonSerializerSettings serializationSettings = null)
+        protected static IEnumerable<T> DeserializeSequenceFromJsonFile<T>(string filePath)
         {
-            var loc = LocationPaths[location];
-            SaveToCustomLocation(items, loc, serializationSettings);
-        }
+            using (var sr = new StreamReader(filePath))
+            { 
+                using (var reader = new JsonTextReader(sr))
+                {
+                    var serializer = new JsonSerializer();
+                    if (!reader.Read() || reader.TokenType != JsonToken.StartArray)
+                        throw new Exception("The source input did not appear to be an array of objects.");
 
-        public void SaveToCustomLocation<T>(IEnumerable<T> items, string location, JsonSerializerSettings serializationSettings = null)
-        {
-            var json = JsonConvert.SerializeObject(items, serializationSettings ?? new JsonSerializerSettings());
-            File.WriteAllText(location, json);
+                    while (reader.Read())
+                    {
+                        if (reader.TokenType == JsonToken.EndArray) break;
+                        var item = serializer.Deserialize<T>(reader);
+                        yield return item;
+                    }
+                }
+            }
         }
     }
 }

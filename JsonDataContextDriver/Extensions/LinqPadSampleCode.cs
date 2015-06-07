@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -21,16 +22,18 @@ namespace JsonDataContextDriver
                     where prop.PropertyType != typeof (string)
 
                     // Display all properties of type IEnumerable<T> (except for string!)
-                    let ienumerableOfT = prop.PropertyType.GetInterface("System.Collections.Generic.IEnumerable`1")
-                    where ienumerableOfT != null
+                    let ienumerableOfT = prop.PropertyType.GetInterface("System.Collections.Generic.IEnumerable`1") 
+                    
+                    where ienumerableOfT != null || prop.PropertyType.Name == "IEnumerable`1" // why? 
                     orderby prop.Name
+
                     select new ExplorerItem(prop.Name, ExplorerItemKind.QueryableObject, ExplorerIcon.Table)
                     {
                         IsEnumerable = true,
                         ToolTipText = prop.PropertyType.Name,
 
                         // Store the entity type to the Tag property. We'll use it later.
-                        Tag = ienumerableOfT.GetGenericArguments()[0]
+                        Tag = prop.PropertyType.GetGenericArguments()[0]
                     }
                     ).ToList();
 
