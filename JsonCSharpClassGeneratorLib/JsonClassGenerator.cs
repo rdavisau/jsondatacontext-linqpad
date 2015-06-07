@@ -249,6 +249,18 @@ namespace Xamasoft.JsonClassGenerator
                 }
             }
 
+            // detect and correct when a field's name matches its containing class. 
+            if (jsonFields.ContainsKey(type.AssignedName))
+            {
+                var newKey = type.AssignedName + "_";
+
+                jsonFields.Add(newKey, jsonFields[type.AssignedName]);
+                fieldExamples.Add(newKey, fieldExamples[type.AssignedName]);
+
+                jsonFields.Remove(type.AssignedName);
+                fieldExamples.Remove(type.AssignedName);
+            }
+
             type.Fields = jsonFields.Select(x => new FieldInfo(this, x.Key, x.Value, UsePascalCase, fieldExamples[x.Key])).ToArray();
 
             Types.Add(type);
