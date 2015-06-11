@@ -20,7 +20,7 @@ namespace JsonDataContextDriver
     public partial class ConnectionDialog
     {
         private IConnectionInfo _connectionInfo;
-        private readonly ObservableCollection<JsonInput> _jsonInputs = new ObservableCollection<JsonInput>();
+        private readonly ObservableCollection<JsonFileInput> _jsonInputs = new ObservableCollection<JsonFileInput>();
         private readonly SolidColorBrush _highlightedBrush = new SolidColorBrush(Colors.LightBlue);
         private readonly SolidColorBrush _standardBrush = new SolidColorBrush(Colors.White);
 
@@ -30,7 +30,7 @@ namespace JsonDataContextDriver
 
             RemoveButton.Click += (sender, args) =>
             {
-                var input = InputsListView.SelectedItem as JsonInput;
+                var input = InputsListView.SelectedItem as JsonFileInput;
 
                 if (input == null)
                     return;
@@ -90,7 +90,7 @@ namespace JsonDataContextDriver
 
             InputsListView.MouseDoubleClick += (sender, args) =>
             {
-                var selectedItem = InputsListView.SelectedItem as JsonInput;
+                var selectedItem = InputsListView.SelectedItem as JsonFileInput;
 
                 if (selectedItem == null)
                     return;
@@ -126,7 +126,7 @@ namespace JsonDataContextDriver
             if (xInputs == null) return;
 
             var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
-            var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
+            var inputDefs = JsonConvert.DeserializeObject<List<JsonFileInput>>(xInputs.Value, jss);
 
             _jsonInputs.Clear();
             inputDefs.ForEach(_jsonInputs.Add);

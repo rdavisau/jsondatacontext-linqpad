@@ -23,13 +23,13 @@ namespace JsonDataContextDriver
         private readonly SolidColorBrush _goodBrush = new SolidColorBrush(Colors.White);
         private readonly SolidColorBrush _badBrush = new SolidColorBrush(Colors.IndianRed) {Opacity = .5};
 
-        private readonly JsonInput _input;
+        private readonly JsonFileInput _input;
 
-        public JsonInput Input { get; set; }
+        public JsonFileInput Input { get; set; }
 
         public AddNewFolderSourceDialog()
         {
-            _input = new JsonInput();
+            _input = new JsonFileInput();
 
             InitializeComponent();
 
@@ -76,7 +76,7 @@ namespace JsonDataContextDriver
             doValidation();
         }
 
-        public AddNewFolderSourceDialog(JsonInput input) : this()
+        public AddNewFolderSourceDialog(JsonFileInput input) : this()
         {
             _input = input;
 

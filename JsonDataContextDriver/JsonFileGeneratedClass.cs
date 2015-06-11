@@ -2,7 +2,7 @@ using System;
 
 namespace JsonDataContextDriver
 {
-    public class GeneratedClass
+    public class JsonFileGeneratedClass : IGeneratedClass
     {
         public string Namespace { get; set; }
         public string ClassName { get; set; }

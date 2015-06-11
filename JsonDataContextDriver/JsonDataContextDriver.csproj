@@ -97,12 +97,12 @@
     <Compile Include="Extensions\Extensions.cs" />
     <Compile Include="Extensions\FolderSelectDialog\FolderSelectDialog.cs" />
     <Compile Include="Extensions\FolderSelectDialog\Reflector.cs" />
-    <Compile Include="GeneratedClass.cs" />
+    <Compile Include="JsonFileGeneratedClass.cs" />
     <Compile Include="JsonDynamicDataContextDriver.cs" />
     <Compile Include="Views\ConnectionDialog.xaml.cs">
       <DependentUpon>ConnectionDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="JsonInput.cs" />
+    <Compile Include="JsonFileInput.cs" />
     <Compile Include="JsonInputType.cs" />
     <Compile Include="Extensions\LinqPadSampleCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

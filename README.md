@@ -40,7 +40,7 @@ For example, one set of objects contained in a root object:
 or many sets of different objects, contained in a root object:
 ```
 {
-  "cats": [ { ... } { ... } ],
+  "cats": [ { ... }, { ... } ],
   "dogs": [ { ... }, { ... } ],
   "trucks": [ { ... }, { ... } ],
 }

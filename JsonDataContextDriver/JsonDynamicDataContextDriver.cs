@@ -68,7 +68,7 @@ namespace JsonDataContextDriver
                 return new List<ExplorerItem>();
 
             var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
-            var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
+            var inputDefs = JsonConvert.DeserializeObject<List<JsonFileInput>>(xInputs.Value, jss);
 
             var ns = nameSpace;
 
@@ -164,7 +164,7 @@ namespace JsonDataContextDriver
             }
         }
 
-        public List<GeneratedClass> GetClassesForInput(JsonInput input, string nameSpace)
+        public List<JsonFileGeneratedClass> GetClassesForInput(JsonFileInput input, string nameSpace)
         {
             var numSamples = input.NumRowsToSample;
 
@@ -246,7 +246,7 @@ namespace JsonDataContextDriver
 
                             _nameSpacesToAdd.Add(finalNamespace);
 
-                            return new GeneratedClass
+                            return new JsonFileGeneratedClass
                             {
                                 Namespace = finalNamespace,
                                 ClassName = className,
@@ -257,7 +257,7 @@ namespace JsonDataContextDriver
                         }
                         catch (Exception e)
                         {
-                            return new GeneratedClass
+                            return new JsonFileGeneratedClass
                             {
                                 DataFilePath = f,
                                 Success = false,
@@ -268,7 +268,7 @@ namespace JsonDataContextDriver
                     .ToList();
         }
 
-        public List<string> GetFilesForInput(JsonInput input)
+        public List<string> GetFilesForInput(JsonFileInput input)
         {
             switch (input.InputType)
             {
@@ -282,6 +282,25 @@ namespace JsonDataContextDriver
                     return new List<string>();
             }
         }
+    }
+
+    public interface IGeneratedClass
+    {   
+        string Namespace { get; set; }
+        string ClassName { get; set; }
+        string ClassDefinition { get; set; }
+        bool Success { get; set; }
+    }
+
+    public interface IJsonInput
+    {
+        void GenerateClasses(string nameSpace);
+
+        List<IGeneratedClass> GeneratedClasses { get; }
+        List<ExplorerItem> ExplorerItems { get; }
+        List<string> NamespacesToAdd { get; }
+        List<string> ContextProperties { get; } 
+        List<string> Errors { get; }
     }
 
 }
