@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -17,24 +16,6 @@ using Xamasoft.JsonClassGenerator;
 
 namespace JsonDataContextDriver
 {
-    [ImplementPropertyChanged]
-    public class JsonTextInput
-    {
-        public string Name { get; set; }
-        public string Json { get; set; }
-
-        public override string ToString()
-        {
-            var summary = "";
-            try
-            {
-                summary = String.Format(" - {0} rows", JsonConvert.DeserializeObject<List<ExpandoObject>>(Json).Count);
-            } catch { }
-
-            return String.Format("{0}{1}", Name, summary);
-        }
-    }
-
     [ImplementPropertyChanged]
     public class JsonFileInput : IJsonInput
     {
@@ -68,6 +49,7 @@ namespace JsonDataContextDriver
         public JsonFileInput()
         {
             NumRowsToSample = 1000;
+            NamespacesToAdd = new List<string>();
         }
 
         public override string ToString()
@@ -116,26 +98,8 @@ namespace JsonDataContextDriver
                             sr.Close();
                             fs.Close();
 
-                            var sanitise = new Func<Func<string, string>>(() =>
-                            {
-                                var replacers = new[]
-                                {
-                                    "\n", "'", " ", "*", "/", "-", "(", ")", ".", "!", "?", "#", ":", "+", "{", "}", "&",
-                                    ","
-                                };
-                                var tuples = replacers.Select(r => Tuple.Create(r, "_")).ToList();
 
-                                return originalName =>
-                                {
-                                    var newName = originalName.ReplaceAll(tuples);
-                                    if (char.IsNumber(newName[0]))
-                                        newName = "_" + newName;
-
-                                    return newName;
-                                };
-                            })();
-
-                            var className = sanitise(Path.GetFileNameWithoutExtension(f));
+                            var className = Path.GetFileNameWithoutExtension(f).SanitiseClassName();
                             var finalNamespace = nameSpace + "." + className + "Input";
                             var outputStream = new MemoryStream();
                             var outputWriter = new StreamWriter(outputStream);
@@ -212,6 +176,7 @@ namespace JsonDataContextDriver
             get
             {
                 return _generatedClasses
+                    .Where(c=> c.Success)
                     .Select(c =>
                        String.Format(
                            "public IEnumerable<{0}.{1}> {2}s {{ get {{ return DeserializeSequenceFromJsonFile<{0}.{1}>(@\"{3}\"); }} }}",

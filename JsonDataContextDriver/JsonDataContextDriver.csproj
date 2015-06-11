@@ -58,6 +58,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
@@ -88,6 +89,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\NotepadHelper.cs" />
+    <Compile Include="IGeneratedClass.cs" />
+    <Compile Include="IJsonInput.cs" />
+    <Compile Include="JsonTextInput.cs" />
+    <Compile Include="Views\AddNewUrlSourceDialog.xaml.cs">
+      <DependentUpon>AddNewUrlSourceDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AddNewTextSourceDialog.xaml.cs">
+      <DependentUpon>AddNewTextSourceDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\AddNewFolderSourceDialog.xaml.cs">
       <DependentUpon>AddNewFolderSourceDialog.xaml</DependentUpon>
     </Compile>
@@ -108,6 +118,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Views\AddNewUrlSourceDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\AddNewTextSourceDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\AddNewFolderSourceDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

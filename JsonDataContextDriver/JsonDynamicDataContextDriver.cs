@@ -56,30 +56,39 @@ namespace JsonDataContextDriver
         }
 
         private List<string> _nameSpacesToAdd = new List<string>();
+        
 
         public override List<ExplorerItem> GetSchemaAndBuildAssembly(IConnectionInfo cxInfo,
             AssemblyName assemblyToBuild, ref string nameSpace,
             ref string typeName)
         {
             _nameSpacesToAdd = new List<string>();
-
+            
             var xInputs = cxInfo.DriverData.Element("inputDefs");
             if (xInputs == null)
                 return new List<ExplorerItem>();
 
             var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
-            var inputDefs = JsonConvert.DeserializeObject<List<JsonFileInput>>(xInputs.Value, jss);
+            var inputDefs = JsonConvert.DeserializeObject<List<IJsonInput>>(xInputs.Value, jss).ToList();
 
             var ns = nameSpace;
 
             // generate class definitions
             var classDefinitions =
                 inputDefs
-                    .SelectMany(i => GetClassesForInput(i, ns))
+                    .SelectMany(i =>
+                    {
+                        i.GenerateClasses(ns);
+                        return i.GeneratedClasses;
+                    })
                     .ToList();
 
+            // add namespaces
+            _nameSpacesToAdd.AddRange(inputDefs.SelectMany(i=>i.NamespacesToAdd));
+
             // remove the error'd inputs
-            var classGenErrors = classDefinitions.Where(c => !c.Success).ToList();
+            var classGenErrors = inputDefs.SelectMany(i => i.Errors).ToList();
+
             classDefinitions =
                 classDefinitions
                     .Where(c => c.Success)
@@ -101,11 +110,7 @@ namespace JsonDataContextDriver
                          "using JsonDataContext;\r\n";
 
             var contextProperties =
-                classDefinitions.Select(
-                    c =>
-                        String.Format(
-                            "public IEnumerable<{0}.{1}> {2}s {{ get {{ return DeserializeSequenceFromJsonFile<{0}.{1}>(@\"{3}\"); }} }}",
-                            c.Namespace, c.ClassName, c.ClassName, c.DataFilePath));
+                inputDefs.SelectMany(i => i.ContextProperties);
 
             var context =
                 String.Format("namespace {1} {{\r\n\r\n public class {2} : JsonDataContextBase {{\r\n\r\n\t\t{0}\r\n\r\n}}\r\n\r\n}}",
@@ -133,9 +138,8 @@ namespace JsonDataContextDriver
                 // Pray to the gods of UX for redemption..
                 // We Can Do Better
                 if (classGenErrors.Any())
-                    MessageBox.Show(String.Format("Couldn't process {0} files:\r\n{1}", classGenErrors.Count,
-                        String.Join(Environment.NewLine,
-                            classGenErrors.Select(e => String.Format("{0} - {1}", e.DataFilePath, e.Error.Message)))));
+                    MessageBox.Show(String.Format("Couldn't process {0} inputs:\r\n{1}", classGenErrors.Count,
+                        String.Join(Environment.NewLine, classGenErrors)));
 
                 return
                     LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
@@ -152,155 +156,36 @@ namespace JsonDataContextDriver
                 if (classGenErrors.Any())
                 {
                     sb.AppendLine("\r\nThis may have been caused by the following class generation errors:\r\n");
-                    sb.AppendLine(String.Join(Environment.NewLine, classGenErrors.Select(e => String.Format("  {0} - {1}", e.DataFilePath, e.Error.Message))));
+                    sb.AppendLine(String.Join(Environment.NewLine, String.Join(Environment.NewLine, classGenErrors)));
                 }
 
                 MessageBox.Show(sb.ToString());
 
-                if (Keyboard.Modifiers == ModifierKeys.Shift)
-                    NotepadHelper.ShowMessage(contextWithCode, "Generated source code");
+                
+                NotepadHelper.ShowMessage(contextWithCode, "Generated source code");
 
                 throw new Exception("Could not generate a typed context for the given inputs");
             }
         }
 
-        public List<JsonFileGeneratedClass> GetClassesForInput(JsonFileInput input, string nameSpace)
+        public override void InitializeContext(IConnectionInfo cxInfo, object context, QueryExecutionManager executionManager)
         {
-            var numSamples = input.NumRowsToSample;
+            
+            base.InitializeContext(cxInfo, context, executionManager);
+            
+            var ctx = (JsonDataContextBase) context;
 
-            return
-                GetFilesForInput(input)
-                    .Select(f =>
-                    {
-                        // TODO: Be a better error handler
-                        try
-                        {
-                            var fs = new FileStream(f, FileMode.Open);
-                            var sr = new StreamReader(fs);
-                            var jtr = new JsonTextReader(sr);
+            var xInputs = cxInfo.DriverData.Element("inputDefs");
+            if (xInputs == null)
+                return;
 
-                            var examples =
-                                Enumerable
-                                    .Range(0, numSamples)
-                                    .Select(_ =>
-                                    {
-                                        while (jtr.Read())
-                                            if (jtr.TokenType == JsonToken.StartObject)
-                                                return JObject.Load(jtr).ToString();
-                                        return null;
-                                    })
-                                    .Where(json => json != null);
+            var jss = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+            var inputs = JsonConvert.DeserializeObject<List<IJsonInput>>(xInputs.Value, jss).ToList();
 
-                            var examplesJson = String.Format("[{0}]", String.Join(",\r\n", examples));
-
-                            jtr.Close();
-                            sr.Close();
-                            fs.Close();
-
-                            var sanitise = new Func<Func<string, string>>(() =>
-                            {
-                                var replacers = new[]
-                                {
-                                    "\n", "'", " ", "*", "/", "-", "(", ")", ".", "!", "?", "#", ":", "+", "{", "}", "&",
-                                    ","
-                                };
-                                var tuples = replacers.Select(r => Tuple.Create(r, "_")).ToList();
-
-                                return originalName =>
-                                {
-                                    var newName = originalName.ReplaceAll(tuples);
-                                    if (char.IsNumber(newName[0]))
-                                        newName = "_" + newName;
-
-                                    return newName;
-                                };
-                            })();
-
-                            var className = sanitise(Path.GetFileNameWithoutExtension(f));
-                            var finalNamespace = nameSpace + "." + className + "Input";
-                            var outputStream = new MemoryStream();
-                            var outputWriter = new StreamWriter(outputStream);
-
-                            var jsg = new JsonClassGenerator
-                            {
-                                Example = examplesJson,
-                                Namespace = finalNamespace,
-                                MainClass = className,
-                                OutputStream = outputWriter,
-                                NoHelperClass = true,
-                            };
-
-                            jsg.GenerateClasses();
-
-                            outputWriter.Flush();
-                            outputStream.Seek(0, SeekOrigin.Begin);
-
-                            var classDef = new StreamReader(outputStream)
-                                .ReadToEnd()
-                                .Replace("IList<", "List<")
-                                .Replace(";\r\n", " { get; set; }\r\n");
-
-                            classDef =
-                                classDef.Substring(classDef.IndexOf(String.Format("namespace {0}", nameSpace),
-                                    StringComparison.Ordinal));
-
-                            _nameSpacesToAdd.Add(finalNamespace);
-
-                            return new JsonFileGeneratedClass
-                            {
-                                Namespace = finalNamespace,
-                                ClassName = className,
-                                DataFilePath = f,
-                                ClassDefinition = classDef,
-                                Success = true
-                            };
-                        }
-                        catch (Exception e)
-                        {
-                            return new JsonFileGeneratedClass
-                            {
-                                DataFilePath = f,
-                                Success = false,
-                                Error = e
-                            };
-                        }
-                    })
-                    .ToList();
-        }
-
-        public List<string> GetFilesForInput(JsonFileInput input)
-        {
-            switch (input.InputType)
-            {
-                case JsonInputType.File:
-                    return new List<string> {input.InputPath};
-                case JsonInputType.Directory:
-                    return
-                        Directory.GetFiles(input.InputPath, input.Mask,
-                            input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).ToList();
-                default:
-                    return new List<string>();
-            }
+            inputs
+                .OfType<JsonTextInput>()
+                .ToList()
+                .ForEach(c=> ctx._jsonTextInputs.Add(c.InputGuid, c.Json));
         }
     }
-
-    public interface IGeneratedClass
-    {   
-        string Namespace { get; set; }
-        string ClassName { get; set; }
-        string ClassDefinition { get; set; }
-        bool Success { get; set; }
-    }
-
-    public interface IJsonInput
-    {
-        void GenerateClasses(string nameSpace);
-
-        List<IGeneratedClass> GeneratedClasses { get; }
-        List<ExplorerItem> ExplorerItems { get; }
-        List<string> NamespacesToAdd { get; }
-        List<string> ContextProperties { get; } 
-        List<string> Errors { get; }
-    }
-
 }

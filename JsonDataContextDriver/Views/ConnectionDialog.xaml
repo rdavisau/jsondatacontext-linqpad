@@ -28,7 +28,11 @@
             <xctk:DropDownButton Content=" Add" Margin="10,0,5,0">
                 <xctk:DropDownButton.DropDownContent>
 
-                    <UniformGrid Rows="2" Columns="1">
+                    <UniformGrid Rows="4" Columns="1">
+                        <DockPanel Background="White">
+                            <TextBlock Name="NewTextMenuItem" Text="Text..." Margin="10,2,10,2" />
+                        </DockPanel>
+                        
                         <DockPanel Background="White">
                             <TextBlock Name="NewFileMenuItem" Text="File..." Margin="10,2,10,2" />
                         </DockPanel>
@@ -37,7 +41,7 @@
                             <TextBlock Name="NewFolderMenuItem" Text="Folder..." Margin="10,2,10,2" />
                         </DockPanel>
 
-                        <DockPanel Background="White" Visibility="Hidden">
+                        <DockPanel Background="White">
                             <TextBlock Name="NewWebMenuItem" Text="Web call..." Margin="10,2,10,2" />
                         </DockPanel>
 
