@@ -4,10 +4,10 @@ A dynamic data context driver for querying JSON data with LINQPad. See [here](ht
 
 This driver allows you to select a set of JSON inputs from which a LINQPad data context will be generated for strongly typed access. A context can currently be built from any combination of: 
 
+- plain text inputs (for example, pasted in or typed by hand)
 - individual file paths
-- directories to search, with a filemask (e.g. \*.json, \*.\*) and the option for recursive enumeration.
-
-For each input, you can also control the number of rows the driver samples when attempting to determine types.
+- directories to search, with a filemask (e.g. \*.json, \*.\*) and the option for recursive enumeration
+- GET calls to urls that return json, exposed either as properties on the context, or methods with parameters mapped to querystring components in the url
 
 ####Screenshots
 
@@ -16,7 +16,7 @@ For each input, you can also control the number of rows the driver samples when 
 
 ####Planned Features:
 
-* support for grabbing JSON from the world wide web (GET or POST with parameters and/or request body)
+* enhanced support for grabbing JSON from the world wide web (basic GET is currently supported, support for POST, basic request customisation (headers, etc.) planned)
 * support for caching of deserialised data, as well as programmatic invalidation of cached data
 * support for persisting new data to the context (for example, written to path in the context's search definitions), allowing you to build out your context as you go
 * better support wrapped JSON, as outlined below
@@ -49,7 +49,7 @@ In the future, this should be optionally detected and unwrapped (in the first ca
 
 #####Errors:
 
-Errors encountered when processing individual sources will not typically prevent the construction of a full context; that is, 'bad' inputs will be ignored and the context is generated with 'good ones. If the driver fails on inputs that you are able to share, please include them when [filing an issue](https://github.com/rdavisau/jsondatacontext-linqpad/issues).
+Errors encountered when processing individual sources will not typically prevent the construction of a full context; that is, 'bad' inputs will be ignored and the context is generated with 'good' ones. If the driver fails on inputs that you are able to share, please include them when [filing an issue](https://github.com/rdavisau/jsondatacontext-linqpad/issues).
 
 ####Contributing:
 
