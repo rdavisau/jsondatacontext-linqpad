@@ -9,6 +9,16 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
 {
     public class CSharpCodeWriter : ICodeWriter
     {
+        private static HashSet<string> _csharpKeywords = new HashSet<string>
+        {
+            "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", "decimal", "default",
+            "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false", "finally", "fixed", "float", "for", "foreach", "goto",
+            "if", "implicit", "in", "int", "interface", "internal", "is", "lock", "long", "namespace", "new", "null", "object", "operator", "out",
+            "override", "params", "private", "protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc",
+            "static", "string", "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", "using",
+            "virtual", "void", "volatile", "while"
+        };
+
         public string FileExtension
         {
             get { return ".cs"; }
@@ -46,7 +56,7 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
                 case JsonTypeEnum.NullableSomething: return "object";
                 case JsonTypeEnum.Object: return type.AssignedName;
                 case JsonTypeEnum.String: return "string";
-                default: throw new System.NotSupportedException("Unsupported json type");
+                default: throw new NotSupportedException("Unsupported json type");
             }
         }
 
@@ -193,15 +203,14 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
                     sw.WriteLine(prefix + "/// </summary>");
                 }
 
-                if (config.UsePascalCase)
+                if (true || config.UsePascalCase)
                 {
-
                     sw.WriteLine(prefix + "[JsonProperty(\"{0}\")]", field.JsonMemberName);
                 }
 
                 if (config.UseProperties)
                 {
-                    sw.WriteLine(prefix + "public {0} {1} {{ get; set; }}", field.Type.GetTypeName(), field.MemberName);
+                    sw.WriteLine(prefix + "public {0} {1}{2} {{ get; set; }}", field.Type.GetTypeName(), (ShouldPrefix(field.MemberName) || field.MemberName == type.AssignedName) ? "_" : "", field.MemberName);
                 }
                 else
                 {
@@ -212,7 +221,16 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
         }
 
 
+        private bool ShouldPrefix(string fieldName)
+        {
+            if (!Char.IsLetter(fieldName.ToCharArray()[0]))
+                return true;
 
+            if (_csharpKeywords.Contains(fieldName))
+                return true;
+
+            return false;
+        }
 
 
 
@@ -234,7 +252,7 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
                 string variable = null;
                 if (field.Type.MustCache)
                 {
-                    variable = "_" + char.ToLower(field.MemberName[0]) + field.MemberName.Substring(1);
+                    variable = "_" + Char.ToLower(field.MemberName[0]) + field.MemberName.Substring(1);
                     sw.WriteLine(prefix + "[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]");
                     sw.WriteLine(prefix + "private {0} {1};", field.Type.GetTypeName(), variable);
                 }
@@ -295,6 +313,5 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
             }
         }
         #endregion
-
     }
 }

@@ -20,7 +20,7 @@ namespace JsonDataContextDriver
     public partial class ConnectionDialog
     {
         private IConnectionInfo _connectionInfo;
-        private readonly ObservableCollection<JsonInput> _jsonInputs = new ObservableCollection<JsonInput>();
+        private readonly ObservableCollection<IJsonInput> _jsonInputs = new ObservableCollection<IJsonInput>();
         private readonly SolidColorBrush _highlightedBrush = new SolidColorBrush(Colors.LightBlue);
         private readonly SolidColorBrush _standardBrush = new SolidColorBrush(Colors.White);
 
@@ -30,12 +30,23 @@ namespace JsonDataContextDriver
 
             RemoveButton.Click += (sender, args) =>
             {
-                var input = InputsListView.SelectedItem as JsonInput;
+                var input = InputsListView.SelectedItem as IJsonInput;
 
                 if (input == null)
                     return;
 
                 _jsonInputs.Remove(input);
+            };
+
+            NewTextMenuItem.MouseUp += (sender, args) =>
+            {
+                var dialog = new AddNewTextSourceDialog() { Owner = this };
+                var result = dialog.ShowDialog();
+
+                if (!(result.HasValue && result.Value))
+                    return;
+
+                _jsonInputs.Add(dialog.Input);
             };
 
             NewFileMenuItem.MouseUp += (sender, args) =>
@@ -60,14 +71,23 @@ namespace JsonDataContextDriver
                 _jsonInputs.Add(dialog.Input);
             };
 
-            NewWebMenuItem.MouseUp += (sender, args) => MessageBox.Show("NOT IMPLEMENTED, EXCEPTION! >:O");
+            NewWebMenuItem.MouseUp += (sender, args) =>
+            {
+                var dialog = new AddNewUrlSourceDialog() { Owner = this };
+                var result = dialog.ShowDialog();
+
+                if (!(result.HasValue && result.Value))
+                    return;
+
+                _jsonInputs.Add(dialog.Input);
+            };
 
             foreach (
                 var panel in
                     new[]
                     {
                         (DockPanel) NewFileMenuItem.Parent, (DockPanel) NewFolderMenuItem.Parent,
-                        (DockPanel) NewWebMenuItem.Parent
+                        (DockPanel) NewWebMenuItem.Parent, (DockPanel) NewTextMenuItem.Parent
                     })
             {
                 var p = panel;
@@ -90,30 +110,50 @@ namespace JsonDataContextDriver
 
             InputsListView.MouseDoubleClick += (sender, args) =>
             {
-                var selectedItem = InputsListView.SelectedItem as JsonInput;
+                var selectedItem = InputsListView.SelectedItem;
 
                 if (selectedItem == null)
                     return;
 
-                if (selectedItem.IsDirectory)
+                if (selectedItem is JsonTextInput)
                 {
-                    var dialog = new AddNewFolderSourceDialog(selectedItem) { Owner = this };
+                    var jti = selectedItem as JsonTextInput;
+                    var dialog = new AddNewTextSourceDialog(jti) { Owner = this };
                     dialog.ShowDialog();
                 }
-                else
+                else if (selectedItem is JsonUrlInput)
                 {
-                    var dialog = new AddNewFileSourceDialog(selectedItem) { Owner = this };
+                    var jui = selectedItem as JsonUrlInput;
+                    var dialog = new AddNewUrlSourceDialog(jui) { Owner = this };
                     dialog.ShowDialog();
                 }
-                
+                else if (selectedItem is JsonFileInput)
+                { 
+                    var jfi = selectedItem as JsonFileInput;
+                    if (jfi.IsDirectory)
+                    {
+                        var dialog = new AddNewFolderSourceDialog(jfi) { Owner = this };
+                        dialog.ShowDialog();
+                    }
+                    else
+                    {
+                        var dialog = new AddNewFileSourceDialog(jfi) { Owner = this };
+                        dialog.ShowDialog();
+                    }
+                }
             };
 
             Action checkCanOk = () => OkButton.IsEnabled = _jsonInputs.Count > 0;
+            Action checkCanRemove = () => RemoveButton.IsEnabled = InputsListView.SelectedItem != null;
 
             _jsonInputs.CollectionChanged += (sender, args) => checkCanOk();
+            InputsListView.SelectionChanged += (sender, args) => checkCanRemove();
 
             InputsListView.ItemsSource = _jsonInputs;
             checkCanOk();
+            checkCanRemove();
+
+            ConnectionNameTextBox.Focus();
         }
 
         public void SetContext(IConnectionInfo cxInfo, bool isNewConnection)
@@ -126,7 +166,7 @@ namespace JsonDataContextDriver
             if (xInputs == null) return;
 
             var jss = new JsonSerializerSettings {TypeNameHandling = TypeNameHandling.All};
-            var inputDefs = JsonConvert.DeserializeObject<List<JsonInput>>(xInputs.Value, jss);
+            var inputDefs = JsonConvert.DeserializeObject<List<IJsonInput>>(xInputs.Value, jss);
 
             _jsonInputs.Clear();
             inputDefs.ForEach(_jsonInputs.Add);

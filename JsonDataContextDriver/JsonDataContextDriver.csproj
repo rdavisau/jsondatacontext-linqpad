@@ -41,7 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LINQPad">
-      <HintPath>..\..\..\..\Desktop\LINQPad\LINQPad.exe</HintPath>
+      <HintPath>..\..\..\..\Dropbox\code\LINQPad4\LINQPad.exe</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -58,6 +58,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
@@ -88,6 +89,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\NotepadHelper.cs" />
+    <Compile Include="Inputs\IGeneratedClass.cs" />
+    <Compile Include="Inputs\IJsonInput.cs" />
+    <Compile Include="Inputs\JsonTextGeneratedClass.cs" />
+    <Compile Include="Inputs\JsonTextInput.cs" />
+    <Compile Include="Views\AddNewUrlSourceDialog.xaml.cs">
+      <DependentUpon>AddNewUrlSourceDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AddNewTextSourceDialog.xaml.cs">
+      <DependentUpon>AddNewTextSourceDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\AddNewFolderSourceDialog.xaml.cs">
       <DependentUpon>AddNewFolderSourceDialog.xaml</DependentUpon>
     </Compile>
@@ -97,17 +108,27 @@
     <Compile Include="Extensions\Extensions.cs" />
     <Compile Include="Extensions\FolderSelectDialog\FolderSelectDialog.cs" />
     <Compile Include="Extensions\FolderSelectDialog\Reflector.cs" />
-    <Compile Include="GeneratedClass.cs" />
+    <Compile Include="Inputs\JsonFileGeneratedClass.cs" />
     <Compile Include="JsonDynamicDataContextDriver.cs" />
     <Compile Include="Views\ConnectionDialog.xaml.cs">
       <DependentUpon>ConnectionDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="JsonInput.cs" />
-    <Compile Include="JsonInputType.cs" />
+    <Compile Include="Inputs\JsonFileInput.cs" />
+    <Compile Include="Inputs\JsonInputType.cs" />
     <Compile Include="Extensions\LinqPadSampleCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Inputs\JsonUrlGeneratedClass.cs" />
+    <Compile Include="Inputs\JsonUrlInput.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Views\AddNewUrlSourceDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\AddNewTextSourceDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\AddNewFolderSourceDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

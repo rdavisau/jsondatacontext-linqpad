@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        mc:Ignorable="d" Height="220" Width="450"
+        mc:Ignorable="d" Height="200" Width="450"
         WindowStartupLocation="CenterOwner"
         Title="Json Folder Source">
 
@@ -37,7 +37,7 @@
 
             <TextBlock Grid.Row="3" Grid.Column="0" Text="Rows to sample:" Margin="5" HorizontalAlignment="Right" />
             <TextBox Name="NumRowsToSampleTextBox" Grid.Row="3" Grid.Column="1" Margin="5" Width="50"
-                     HorizontalAlignment="Left" HorizontalContentAlignment="Center" Text="1000" />
+                     HorizontalAlignment="Left" HorizontalContentAlignment="Center" Text="50" />
 
         </Grid>
 
