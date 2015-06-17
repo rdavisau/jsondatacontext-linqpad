@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Web;
 using System.Windows.Input;
 using JsonDataContext;
 using JsonDataContextDriver.Notepad;
@@ -46,7 +47,7 @@ namespace JsonDataContextDriver
         public override IEnumerable<string> GetAssembliesToAdd(IConnectionInfo cxInfo)
         {
             return base.GetAssembliesToAdd(cxInfo)
-                .Concat(new[] {typeof (JsonDataContextBase).Assembly.Location});
+                .Concat(new[] {typeof (JsonDataContextBase).Assembly.Location, typeof(HttpUtility).Assembly.Location});
         }
 
         public override IEnumerable<string> GetNamespacesToAdd(IConnectionInfo cxInfo)
@@ -76,6 +77,7 @@ namespace JsonDataContextDriver
             // generate class definitions
             var classDefinitions =
                 inputDefs
+                    .AsParallel()
                     .SelectMany(i =>
                     {
                         i.GenerateClasses(ns);
@@ -107,6 +109,7 @@ namespace JsonDataContextDriver
                          "using System.Collections.Generic;\r\n" +
                          "using System.IO;\r\n" +
                          "using Newtonsoft.Json;\r\n" +
+                         "using System.Web;\r\n" +
                          "using JsonDataContext;\r\n";
 
             var contextProperties =
@@ -127,7 +130,10 @@ namespace JsonDataContextDriver
                 ReferencedAssemblies =
                 {
                     typeof (JsonDataContextBase).Assembly.Location,
-                    typeof (JsonConvert).Assembly.Location
+                    typeof (JsonConvert).Assembly.Location,
+
+                    typeof (UriBuilder).Assembly.Location,
+                    typeof (HttpUtility).Assembly.Location
                 }
             };
 
@@ -140,9 +146,11 @@ namespace JsonDataContextDriver
                 if (classGenErrors.Any())
                     MessageBox.Show(String.Format("Couldn't process {0} inputs:\r\n{1}", classGenErrors.Count,
                         String.Join(Environment.NewLine, classGenErrors)));
-
+                
                 return
-                    LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)));
+                    LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)))
+                    .Concat(inputDefs.SelectMany(i=>i.ExplorerItems??new List<ExplorerItem>()))
+                    .ToList();
             }
             else
             {
@@ -161,7 +169,6 @@ namespace JsonDataContextDriver
 
                 MessageBox.Show(sb.ToString());
 
-                
                 NotepadHelper.ShowMessage(contextWithCode, "Generated source code");
 
                 throw new Exception("Could not generate a typed context for the given inputs");

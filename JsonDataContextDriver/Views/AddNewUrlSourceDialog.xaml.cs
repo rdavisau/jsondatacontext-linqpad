@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,11 +14,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using JsonDataContextDriver;
-using LINQPad.Extensibility.DataContext;
 using Microsoft.Win32;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PropertyChanged;
+using Path = System.IO.Path;
 
 namespace JsonDataContextDriver
 {
@@ -28,13 +25,13 @@ namespace JsonDataContextDriver
         private readonly SolidColorBrush _goodBrush = new SolidColorBrush(Colors.White);
         private readonly SolidColorBrush _badBrush = new SolidColorBrush(Colors.IndianRed) {Opacity = .5};
 
-        private readonly JsonTextInput _input;
+        private readonly JsonUrlInput _input;
 
-        public JsonTextInput Input { get; set; }
+        public JsonUrlInput Input { get; set; }
 
         public AddNewUrlSourceDialog()
         {
-            _input = new JsonTextInput();
+            _input = new JsonUrlInput();
 
             InitializeComponent();
 
@@ -42,27 +39,26 @@ namespace JsonDataContextDriver
             Action doValidation = () =>
             {
                 var name = NameTextBox.Text;
-                var json = "";//JsonTextBox.Text;
+                var uri = UrlTextBox.Text;
 
-                bool validJson = false;
+                bool validUri = false;
                 try
                 {
-                    var obj = JContainer.Parse(json);
-                    validJson = true;
+                    var obj = new Uri(uri, UriKind.Absolute);
+                    validUri = true;
                 } catch { }
 
-                var nameOk = true;
-                var jsonOk = validJson || String.IsNullOrEmpty(json);
+                var nameOk = String.IsNullOrEmpty(name) || char.IsLetter(name.ToCharArray()[0]);
+                var jsonOk = validUri || String.IsNullOrEmpty(uri);
 
-                OkButton.IsEnabled = (nameOk && jsonOk && !String.IsNullOrEmpty(json));
+                OkButton.IsEnabled = (nameOk && jsonOk && !String.IsNullOrEmpty(name));
 
                 NameTextBox.Background = nameOk ? _goodBrush : _badBrush;
-                //JsonTextBox.Background = jsonOk ? _goodBrush : _badBrush;
-                
+                UrlTextBox.Background = jsonOk ? _goodBrush : _badBrush;
             };
 
             NameTextBox.TextChanged += (sender, args) => doValidation();
-            //JsonTextBox.TextChanged += (sender, args) => doValidation();
+            UrlTextBox.TextChanged += (sender, args) => doValidation();
 
             UrlTextBox.TextChanged += (sender, args) =>
             {
@@ -82,54 +78,53 @@ namespace JsonDataContextDriver
                 catch
                 {
                     UrlTextBox.Background = _badBrush;
+                    ParametersListView.ItemsSource = null;
+                }
+
+                if (ParametersListView.Items.Count > 0)
+                    ExposeAsMethodCheckbox.IsEnabled = true;
+                else
+                {
+                    ExposeAsMethodCheckbox.IsEnabled = false;
+                    ExposeAsPropertyCheckBox.IsChecked = true;
                 }
             };
+
+            ExposeAsMethodCheckbox.Checked += (sender, args) => ParametersListView.Visibility = Visibility.Visible;
+            ExposeAsMethodCheckbox.Unchecked += (sender, args) => ParametersListView.Visibility = Visibility.Collapsed;
+
 
             CancelButton.Click += (sender, args) => DialogResult = false;
             OkButton.Click += (sender, args) =>
             {
                 _input.Name = NameTextBox.Text;
-                //_input.Json = JsonTextBox.Text;
+                _input.Url = UrlTextBox.Text;
+                _input.GenerateAsMethod = ExposeAsMethodCheckbox.IsChecked == true;
 
                 Input = _input;
                 DialogResult = true;
             };
 
             doValidation();
+
+            NameTextBox.Focus();
         }
 
-        public AddNewUrlSourceDialog(JsonTextInput input) : this()
+        public AddNewUrlSourceDialog(JsonUrlInput input) : this()
         {
             _input = input;
 
             NameTextBox.Text = _input.Name;
-            //JsonTextBox.Text = _input.Json;
+            UrlTextBox.Text = _input.Url;
+            ExposeAsMethodCheckbox.IsChecked = _input.GenerateAsMethod;
+            ExposeAsPropertyCheckBox.IsChecked = !_input.GenerateAsMethod;
         }
         
-    }
-
-    [ImplementPropertyChanged]
-    public class JsonUrlInput : IJsonInput
-    {
-        public string Name { get; set; }
-        public string Url { get; set; }
-        
-
-        public void GenerateClasses(string nameSpace)
-        {
-            throw new NotImplementedException();
-        }
-
-        public List<IGeneratedClass> GeneratedClasses { get; }
-        public List<ExplorerItem> ExplorerItems { get; }
-        public List<string> NamespacesToAdd { get; }
-        public List<string> ContextProperties { get; }
-        public List<string> Errors { get; }
     }
 
     public class MockXViewModel
     {
-        public List<Tuple<string, string>> Items => new List<Tuple<string, string>>
+        public List<Tuple<string, string>> Items = new List<Tuple<string, string>>
         {
             Tuple.Create("param1", "value1"),
             Tuple.Create("param2", "value2"),
@@ -137,7 +132,6 @@ namespace JsonDataContextDriver
         };
 
     }
-
 
 
 }

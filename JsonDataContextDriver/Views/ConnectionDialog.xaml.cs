@@ -121,8 +121,14 @@ namespace JsonDataContextDriver
                     var dialog = new AddNewTextSourceDialog(jti) { Owner = this };
                     dialog.ShowDialog();
                 }
+                else if (selectedItem is JsonUrlInput)
+                {
+                    var jui = selectedItem as JsonUrlInput;
+                    var dialog = new AddNewUrlSourceDialog(jui) { Owner = this };
+                    dialog.ShowDialog();
+                }
                 else if (selectedItem is JsonFileInput)
-                { ;
+                { 
                     var jfi = selectedItem as JsonFileInput;
                     if (jfi.IsDirectory)
                     {
@@ -138,11 +144,16 @@ namespace JsonDataContextDriver
             };
 
             Action checkCanOk = () => OkButton.IsEnabled = _jsonInputs.Count > 0;
+            Action checkCanRemove = () => RemoveButton.IsEnabled = InputsListView.SelectedItem != null;
 
             _jsonInputs.CollectionChanged += (sender, args) => checkCanOk();
+            InputsListView.SelectionChanged += (sender, args) => checkCanRemove();
 
             InputsListView.ItemsSource = _jsonInputs;
             checkCanOk();
+            checkCanRemove();
+
+            ConnectionNameTextBox.Focus();
         }
 
         public void SetContext(IConnectionInfo cxInfo, bool isNewConnection)

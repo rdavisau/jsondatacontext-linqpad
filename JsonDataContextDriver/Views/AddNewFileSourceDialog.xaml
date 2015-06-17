@@ -25,7 +25,7 @@
 
             <TextBlock Grid.Row="1" Grid.Column="0" Text="Rows to sample:" Margin="5" HorizontalAlignment="Right" />
             <TextBox Name="NumRowsToSampleTextBox" Grid.Row="1" Grid.Column="1" Margin="5" Width="50"
-                     HorizontalAlignment="Left" HorizontalContentAlignment="Center" Text="1000" />
+                     HorizontalAlignment="Left" HorizontalContentAlignment="Center" Text="50" />
         </Grid>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

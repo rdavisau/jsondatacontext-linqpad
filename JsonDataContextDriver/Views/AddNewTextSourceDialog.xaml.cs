@@ -48,10 +48,10 @@ namespace JsonDataContextDriver
                     validJson = true;
                 } catch { }
 
-                var nameOk = true;
+                var nameOk = String.IsNullOrEmpty(name) || char.IsLetter(name.ToCharArray()[0]);
                 var jsonOk = validJson || String.IsNullOrEmpty(json);
 
-                OkButton.IsEnabled = (nameOk && jsonOk && !String.IsNullOrEmpty(json));
+                OkButton.IsEnabled = (nameOk && jsonOk && !String.IsNullOrEmpty(json) && !string.IsNullOrWhiteSpace(name));
 
                 NameTextBox.Background = nameOk ? _goodBrush : _badBrush;
                 JsonTextBox.Background = jsonOk ? _goodBrush : _badBrush;
@@ -71,6 +71,8 @@ namespace JsonDataContextDriver
             };
 
             doValidation();
+
+            NameTextBox.Focus();
         }
 
         public AddNewTextSourceDialog(JsonTextInput input) : this()

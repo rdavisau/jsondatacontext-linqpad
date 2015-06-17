@@ -18,7 +18,7 @@ namespace JsonDataContextDriver
         public string Name { get; set; }
         public string Json { get; set; }
 
-        public JsonTextGeneratedClass _generatedClass;
+        private JsonTextGeneratedClass _generatedClass;
 
         public JsonTextInput()
         {
@@ -29,10 +29,7 @@ namespace JsonDataContextDriver
         public override string ToString()
         {
             var summary = "";
-            try
-            {
-                summary = String.Format(" - {0} rows", JsonConvert.DeserializeObject<List<ExpandoObject>>(Json).Count);
-            } catch { }
+            try { summary = String.Format(" : {0} rows of json text", JsonConvert.DeserializeObject<List<ExpandoObject>>(Json).Count); } catch { }
 
             return String.Format("{0}{1}", Name, summary);
         }
@@ -54,6 +51,7 @@ namespace JsonDataContextDriver
                     MainClass = className,
                     OutputStream = outputWriter,
                     NoHelperClass = true,
+                    UseProperties = true
                 };
 
                 jsg.GenerateClasses();
@@ -63,8 +61,7 @@ namespace JsonDataContextDriver
 
                 var classDef = new StreamReader(outputStream)
                     .ReadToEnd()
-                    .Replace("IList<", "List<")
-                    .Replace(";\r\n", " { get; set; }\r\n");
+                    .Replace("IList<", "List<");
 
                 classDef =
                     classDef.Substring(classDef.IndexOf(String.Format("namespace {0}", nameSpace),
@@ -72,7 +69,7 @@ namespace JsonDataContextDriver
 
                 NamespacesToAdd.Add(finalNamespace);
 
-                _generatedClass = new JsonTextGeneratedClass()
+                _generatedClass = new JsonTextGeneratedClass(this)
                 {
                     Namespace = finalNamespace,
                     ClassName = className,
@@ -82,7 +79,7 @@ namespace JsonDataContextDriver
             }
             catch (Exception e)
             {
-                _generatedClass = new JsonTextGeneratedClass
+                _generatedClass = new JsonTextGeneratedClass(this)
                 {
                     Success = false,
                     Error = e
@@ -93,33 +90,17 @@ namespace JsonDataContextDriver
         [JsonIgnore]
         public List<IGeneratedClass> GeneratedClasses { get { return new List<IGeneratedClass> {_generatedClass}; } }
         [JsonIgnore]
-        public List<ExplorerItem> ExplorerItems { get; }
+        public List<ExplorerItem> ExplorerItems { get; set;  }
         [JsonIgnore]
-        public List<string> NamespacesToAdd { get; }
+        public List<string> NamespacesToAdd { get; set; }
 
         [JsonIgnore]
-        public List<string> ContextProperties
+        public List<string> ContextProperties => new List<string>
         {
-            get
-            {
-                return new List<string>
-                {
-                    String.Format("public IEnumerable<{0}.{1}> {1} {{ get {{ return GetTextJsonInput<{0}.{1}>(\"{2}\"); }}}}", _generatedClass.Namespace, _generatedClass.ClassName, InputGuid)
-                };
-            }
-        }
+            String.Format("public IEnumerable<{0}.{1}> {1} {{ get {{ return GetTextJsonInput<{0}.{1}>(\"{2}\"); }}}}", _generatedClass.Namespace, _generatedClass.ClassName, InputGuid)
+        };
 
         [JsonIgnore]
         public List<string> Errors { get { return _generatedClass == null || _generatedClass.Success ? new List<string>() : new List<string> {  _generatedClass.Error.Message }; } }
-    }
-
-    public class JsonTextGeneratedClass : IGeneratedClass
-    {
-        public string Namespace { get; set; }
-        public string ClassName { get; set; }
-        public string ClassDefinition { get; set; }
-        public bool Success { get; set; }
-        public Exception Error { get; set; }
-            
     }
 }

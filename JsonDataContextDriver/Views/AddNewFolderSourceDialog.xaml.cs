@@ -74,6 +74,8 @@ namespace JsonDataContextDriver
             };
 
             doValidation();
+
+            PathTextBox.Focus();
         }
 
         public AddNewFolderSourceDialog(JsonFileInput input) : this()

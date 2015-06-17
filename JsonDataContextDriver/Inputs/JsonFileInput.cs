@@ -48,7 +48,7 @@ namespace JsonDataContextDriver
 
         public JsonFileInput()
         {
-            NumRowsToSample = 1000;
+            NumRowsToSample = 50;
             NamespacesToAdd = new List<string>();
         }
 
@@ -98,7 +98,6 @@ namespace JsonDataContextDriver
                             sr.Close();
                             fs.Close();
 
-
                             var className = Path.GetFileNameWithoutExtension(f).SanitiseClassName();
                             var finalNamespace = nameSpace + "." + className + "Input";
                             var outputStream = new MemoryStream();
@@ -111,6 +110,7 @@ namespace JsonDataContextDriver
                                 MainClass = className,
                                 OutputStream = outputWriter,
                                 NoHelperClass = true,
+                                UseProperties = true
                             };
 
                             jsg.GenerateClasses();
@@ -120,8 +120,7 @@ namespace JsonDataContextDriver
 
                             var classDef = new StreamReader(outputStream)
                                 .ReadToEnd()
-                                .Replace("IList<", "List<")
-                                .Replace(";\r\n", " { get; set; }\r\n");
+                                .Replace("IList<", "List<");
 
                             classDef =
                                 classDef.Substring(classDef.IndexOf(String.Format("namespace {0}", nameSpace),
@@ -129,7 +128,7 @@ namespace JsonDataContextDriver
 
                             NamespacesToAdd.Add(finalNamespace);
 
-                            return new JsonFileGeneratedClass
+                            return new JsonFileGeneratedClass(this)
                             {
                                 Namespace = finalNamespace,
                                 ClassName = className,
@@ -140,7 +139,7 @@ namespace JsonDataContextDriver
                         }
                         catch (Exception e)
                         {
-                            return new JsonFileGeneratedClass
+                            return new JsonFileGeneratedClass(this)
                             {
                                 DataFilePath = f,
                                 Success = false,
@@ -171,29 +170,17 @@ namespace JsonDataContextDriver
         public List<ExplorerItem> ExplorerItems { get; set; }
         public List<string> NamespacesToAdd { get; set; }
 
-        public List<string> ContextProperties
-        {
-            get
-            {
-                return _generatedClasses
-                    .Where(c=> c.Success)
-                    .Select(c =>
-                       String.Format(
-                           "public IEnumerable<{0}.{1}> {2}s {{ get {{ return DeserializeSequenceFromJsonFile<{0}.{1}>(@\"{3}\"); }} }}",
-                           c.Namespace, c.ClassName, c.ClassName, c.DataFilePath))
-                    .ToList();
-            }
-        }
+        public List<string> ContextProperties => _generatedClasses
+            .Where(c=> c.Success)
+            .Select(c =>
+                String.Format(
+                    "public IEnumerable<{0}.{1}> {2}s {{ get {{ return GetFileJsonInput<{0}.{1}>(@\"{3}\"); }} }}",
+                    c.Namespace, c.ClassName, c.ClassName, c.DataFilePath))
+            .ToList();
 
-        public List<string> Errors
-        {
-            get
-            {
-                return _generatedClasses
-                            .Where(c=> !c.Success)
-                            .Select(e => String.Format("  {0} - {1}", e.DataFilePath, e.Error.Message))
-                            .ToList();
-            }
-        }
+        public List<string> Errors => _generatedClasses
+            .Where(c=> !c.Success)
+            .Select(e => String.Format("  {0} - {1}", e.DataFilePath, e.Error.Message))
+            .ToList();
     }
 }

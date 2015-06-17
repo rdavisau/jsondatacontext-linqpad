@@ -41,7 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LINQPad">
-      <HintPath>..\..\..\..\Desktop\LINQPad\LINQPad.exe</HintPath>
+      <HintPath>..\..\..\..\Dropbox\code\LINQPad4\LINQPad.exe</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -89,9 +89,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\NotepadHelper.cs" />
-    <Compile Include="IGeneratedClass.cs" />
-    <Compile Include="IJsonInput.cs" />
-    <Compile Include="JsonTextInput.cs" />
+    <Compile Include="Inputs\IGeneratedClass.cs" />
+    <Compile Include="Inputs\IJsonInput.cs" />
+    <Compile Include="Inputs\JsonTextGeneratedClass.cs" />
+    <Compile Include="Inputs\JsonTextInput.cs" />
     <Compile Include="Views\AddNewUrlSourceDialog.xaml.cs">
       <DependentUpon>AddNewUrlSourceDialog.xaml</DependentUpon>
     </Compile>
@@ -107,15 +108,17 @@
     <Compile Include="Extensions\Extensions.cs" />
     <Compile Include="Extensions\FolderSelectDialog\FolderSelectDialog.cs" />
     <Compile Include="Extensions\FolderSelectDialog\Reflector.cs" />
-    <Compile Include="JsonFileGeneratedClass.cs" />
+    <Compile Include="Inputs\JsonFileGeneratedClass.cs" />
     <Compile Include="JsonDynamicDataContextDriver.cs" />
     <Compile Include="Views\ConnectionDialog.xaml.cs">
       <DependentUpon>ConnectionDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="JsonFileInput.cs" />
-    <Compile Include="JsonInputType.cs" />
+    <Compile Include="Inputs\JsonFileInput.cs" />
+    <Compile Include="Inputs\JsonInputType.cs" />
     <Compile Include="Extensions\LinqPadSampleCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Inputs\JsonUrlGeneratedClass.cs" />
+    <Compile Include="Inputs\JsonUrlInput.cs" />
   </ItemGroup>
   <ItemGroup>
     <Page Include="Views\AddNewUrlSourceDialog.xaml">
