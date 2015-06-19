@@ -38,6 +38,8 @@ namespace Xamasoft.JsonClassGenerator
         private bool used = false;
         public bool UseNamespaces { get { return Namespace != null; } }
 
+        public bool GeneratePartialClasses { get; set; }
+
         public void GenerateClasses()
         {
             if (CodeWriter == null) CodeWriter = new CSharpCodeWriter();
