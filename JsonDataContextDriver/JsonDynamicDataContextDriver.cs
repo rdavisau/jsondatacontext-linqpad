@@ -114,6 +114,8 @@ namespace JsonDataContextDriver
                          "using System.Web;\r\n" +
                          "using JsonDataContext;\r\n";
 
+            usings += String.Join("\r\n", classDefinitions.Select(c => String.Format("using {0};", c.Namespace)));
+
             var contextProperties =
                 inputDefs.SelectMany(i => i.ContextProperties);
 
