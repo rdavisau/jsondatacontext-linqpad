@@ -16,7 +16,7 @@ This driver allows you to select a set of JSON inputs from which a LINQPad data 
 
 ####Planned Features:
 
-* enhanced support for grabbing JSON from the world wide web (basic GET is currently supported, support for POST, basic request customisation (headers, etc.) planned)
+* enhanced support for grabbing JSON from the world wide web (basic GET with headers is currently supported, support for POST planned)
 * support for caching of deserialised data, as well as programmatic invalidation of cached data
 * support for persisting new data to the context (for example, written to path in the context's search definitions), allowing you to build out your context as you go
 * better support wrapped JSON

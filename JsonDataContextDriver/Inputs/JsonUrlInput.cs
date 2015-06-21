@@ -2,6 +2,7 @@ using System;
 using System.CodeDom;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -18,11 +19,14 @@ namespace JsonDataContextDriver
     {
         public string Name { get; set; }
         public string Url { get; set; }
+        public ObservableCollection<WebRequestHeader> Headers { get; set; } 
+
         public bool GenerateAsMethod { get; set; }
 
         public JsonUrlInput()
         {
             NamespacesToAdd = new List<string>();
+            Headers = new ObservableCollection<WebRequestHeader>();
             Errors = new List<string>();
         }
 
@@ -50,7 +54,8 @@ namespace JsonDataContextDriver
                     MainClass = className,
                     OutputStream = outputWriter,
                     NoHelperClass = true,
-                    UseProperties = true
+                    UseProperties = true,
+                    GeneratePartialClasses = true
                 };
 
                 jsg.GenerateClasses();
@@ -132,6 +137,12 @@ namespace JsonDataContextDriver
 
         private static string GetContextMethod(JsonUrlGeneratedClass c)
         {
+            var hs = c.OriginalInput
+                .Headers
+                .Select(h => String.Format("Tuple.Create({0},{1})", ToLiteral(h.Name), ToLiteral(h.Value)));
+
+            var hsParam = String.Format("new List<Tuple<string,string>> {{ {0} }}", String.Join(", ", hs));
+
             if (c.OriginalInput.GenerateAsMethod)
             {
                 var ns = c.Namespace;
@@ -148,15 +159,16 @@ namespace JsonDataContextDriver
                     String.Format("var _____uri = new UriBuilder(@\"{0}\");\r\n", url) +
                     String.Format("var _____q = HttpUtility.ParseQueryString(_____uri.Query);\r\n\r\n") +
                     String.Join(Environment.NewLine, ps.Select(q => String.Format("_____q[\"{0}\"] = {0};", q.Item1))) + "\r\n\r\n" +
-                    String.Format("_____uri.Query = _____q.ToString();\r\n") +
-                    String.Format("return GetUrlParameterlessInput<{0}.{1}>(_____uri.ToString());", ns, cls);
+                    String.Format("_____uri.Query = _____q.ToString();\r\n\r\n") +
+
+                    String.Format("return GetUrlParameterlessInput<{0}.{1}>(_____uri.ToString(), {2});", ns, cls, hsParam);
 
                 return String.Format("{0}\r\n{{\r\n{1}\r\n}}", prototype, methodBody);
             }
             else
                 return String.Format(
-                    "public IEnumerable<{0}.{1}> {2}s {{ get {{ return GetUrlParameterlessInput<{0}.{1}>(@\"{3}\"); }} }}",
-                    c.Namespace, c.ClassName, c.ClassName, c.Url);
+                    "public IEnumerable<{0}.{1}> {2}s {{ get {{ return GetUrlParameterlessInput<{0}.{1}>(@\"{3}\", {4}); }} }}",
+                    c.Namespace, c.ClassName, c.ClassName, c.Url, hsParam);
         }
 
         private List<Tuple<string, string>> GetUrlQueryStringParameters()

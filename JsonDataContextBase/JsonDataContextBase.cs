@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Security.Policy;
 using Newtonsoft.Json;
 
@@ -37,11 +38,32 @@ namespace JsonDataContext
             return ReadFromJsonStream<T>(stream);
         }
 
-        protected IEnumerable<T> GetUrlParameterlessInput<T>(string url)
+        protected IEnumerable<T> GetUrlParameterlessInput<T>(string url, List<Tuple<string,string>> headers)
         {
             var req = (HttpWebRequest) HttpWebRequest.Create(url);
             req.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            req.UserAgent = @"Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36";
+
+            foreach (var h in headers)
+            {
+                var name = h.Item1;
+                var val = h.Item2;
+
+                switch (name.ToLower())
+                {
+                    case "accept":
+                        req.Accept = val;
+                        break;
+                    case "user-agent":
+                        req.UserAgent = val;
+                        break;
+                    default:
+                        req.Headers.Add(String.Format("{0}:{1}", name, val));
+                        break;
+                }
+            }
+
+            _globalWebRequestIntercept?.Invoke(req);
+            GetWebRequestIntercept<T>()?.Invoke(req);
 
             var stream = req.GetResponse().GetResponseStream();
 
@@ -87,5 +109,46 @@ namespace JsonDataContext
             stream.Position = 0;
             return stream;
         }
+
+        public void SetGlobalRequestIntercept(Action<HttpWebRequest> intercept)
+        {
+            _globalWebRequestIntercept = intercept;
+        }
+
+        public void RemoveGlobalRequestIntercept()
+        {
+            _globalWebRequestIntercept = request => { };
+        }
+
+        public Action<HttpWebRequest> GetWebRequestIntercept<T>()
+        {
+            Action<HttpWebRequest> intercept = null;
+            _webRequestIntercepts.TryGetValue(typeof (T), out intercept);
+
+            return intercept;
+        }
+
+        public void SetWebRequestIntercept<T>(Action<HttpWebRequest> intercept)
+        {
+            _webRequestIntercepts[typeof(T)] = intercept;
+        }
+
+        public void RemoveWebRequestIntercept<T>()
+        {
+            if (_webRequestIntercepts.ContainsKey(typeof (T)))
+                _webRequestIntercepts.Remove(typeof (T));
+        }
+        public void RemoveAllWebRequestIntercepts<T>()
+        {
+            _webRequestIntercepts.Clear();
+        }
+
+        public List<KeyValuePair<Type, Action<HttpWebRequest>>> GetWebRequestIntercepts()
+        {
+            return _webRequestIntercepts.ToList();
+        }
+
+        private Action<HttpWebRequest> _globalWebRequestIntercept = request => { };
+        private readonly Dictionary<Type,Action<HttpWebRequest>> _webRequestIntercepts = new Dictionary<Type, Action<HttpWebRequest>>();
     }
 }

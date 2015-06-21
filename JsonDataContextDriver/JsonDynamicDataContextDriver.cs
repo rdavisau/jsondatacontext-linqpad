@@ -53,7 +53,8 @@ namespace JsonDataContextDriver
         public override IEnumerable<string> GetNamespacesToAdd(IConnectionInfo cxInfo)
         {
             return base.GetNamespacesToAdd(cxInfo)
-                .Concat(_nameSpacesToAdd);
+                .Concat(_nameSpacesToAdd)
+                .Distinct();
         }
 
         private List<string> _nameSpacesToAdd = new List<string>();
@@ -87,6 +88,7 @@ namespace JsonDataContextDriver
 
             // add namespaces
             _nameSpacesToAdd.AddRange(inputDefs.SelectMany(i=>i.NamespacesToAdd));
+            _nameSpacesToAdd.AddRange(classDefinitions.Select(c=> c.Namespace));
 
             // remove the error'd inputs
             var classGenErrors = inputDefs.SelectMany(i => i.Errors).ToList();
@@ -146,7 +148,7 @@ namespace JsonDataContextDriver
                 if (classGenErrors.Any())
                     MessageBox.Show(String.Format("Couldn't process {0} inputs:\r\n{1}", classGenErrors.Count,
                         String.Join(Environment.NewLine, classGenErrors)));
-                
+
                 return
                     LinqPadSampleCode.GetSchema(result.CompiledAssembly.GetType(String.Format("{0}.{1}", nameSpace, typeName)))
                     .Concat(inputDefs.SelectMany(i=>i.ExplorerItems??new List<ExplorerItem>()))

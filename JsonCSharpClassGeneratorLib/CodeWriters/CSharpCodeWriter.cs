@@ -125,9 +125,7 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
 
         public void WriteClass(IJsonClassGeneratorConfig config, TextWriter sw, JsonType type)
         {
-            var visibility = config.InternalVisibility ? "internal" : "public";
-
-
+            var visibility = (config.InternalVisibility ? "internal" : "public") + (config.GeneratePartialClasses ? " partial" : "");
 
             if (config.UseNestedClasses)
             {
@@ -223,7 +221,7 @@ namespace Xamasoft.JsonClassGenerator.CodeWriters
 
         private bool ShouldPrefix(string fieldName)
         {
-            if (!Char.IsLetter(fieldName.ToCharArray()[0]))
+            if (char.IsNumber(fieldName.ToCharArray()[0]))
                 return true;
 
             if (_csharpKeywords.Contains(fieldName))

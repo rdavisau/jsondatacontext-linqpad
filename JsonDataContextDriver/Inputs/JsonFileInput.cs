@@ -110,7 +110,8 @@ namespace JsonDataContextDriver
                                 MainClass = className,
                                 OutputStream = outputWriter,
                                 NoHelperClass = true,
-                                UseProperties = true
+                                UseProperties = true,
+                                GeneratePartialClasses = true
                             };
 
                             jsg.GenerateClasses();
