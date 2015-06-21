@@ -63,7 +63,7 @@ namespace JsonDataContext
             }
 
             _globalWebRequestIntercept?.Invoke(req);
-            GetWebRequestIntercept<T>()?.Invoke(req);
+            GetSpecificWebRequestIntercept<T>()?.Invoke(req);
 
             var stream = req.GetResponse().GetResponseStream();
 
@@ -110,17 +110,17 @@ namespace JsonDataContext
             return stream;
         }
 
-        public void SetGlobalRequestIntercept(Action<HttpWebRequest> intercept)
+        public void SetGlobalWebRequestIntercept(Action<HttpWebRequest> intercept)
         {
             _globalWebRequestIntercept = intercept;
         }
 
-        public void RemoveGlobalRequestIntercept()
+        public void RemoveGlobalWebRequestIntercept()
         {
             _globalWebRequestIntercept = request => { };
         }
 
-        public Action<HttpWebRequest> GetWebRequestIntercept<T>()
+        public Action<HttpWebRequest> GetSpecificWebRequestIntercept<T>()
         {
             Action<HttpWebRequest> intercept = null;
             _webRequestIntercepts.TryGetValue(typeof (T), out intercept);
@@ -128,22 +128,22 @@ namespace JsonDataContext
             return intercept;
         }
 
-        public void SetWebRequestIntercept<T>(Action<HttpWebRequest> intercept)
+        public void SetSpecificWebRequestIntercept<T>(Action<HttpWebRequest> intercept)
         {
             _webRequestIntercepts[typeof(T)] = intercept;
         }
 
-        public void RemoveWebRequestIntercept<T>()
+        public void RemoveSpecificWebRequestIntercept<T>()
         {
             if (_webRequestIntercepts.ContainsKey(typeof (T)))
                 _webRequestIntercepts.Remove(typeof (T));
         }
-        public void RemoveAllWebRequestIntercepts<T>()
+        public void RemoveAllSpecificWebRequestIntercepts<T>()
         {
             _webRequestIntercepts.Clear();
         }
 
-        public List<KeyValuePair<Type, Action<HttpWebRequest>>> GetWebRequestIntercepts()
+        public List<KeyValuePair<Type, Action<HttpWebRequest>>> GetSpecificWebRequestIntercepts()
         {
             return _webRequestIntercepts.ToList();
         }
