@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,16 +18,20 @@ using System.Windows.Shapes;
 using JsonDataContextDriver;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using PropertyChanged;
 using Path = System.IO.Path;
 
 namespace JsonDataContextDriver
 {
+    [ImplementPropertyChanged]
     public partial class AddNewUrlSourceDialog : Window
     {
         private readonly SolidColorBrush _goodBrush = new SolidColorBrush(Colors.White);
         private readonly SolidColorBrush _badBrush = new SolidColorBrush(Colors.IndianRed) {Opacity = .5};
 
         private readonly JsonUrlInput _input;
+
+        public ObservableCollection<WebRequestHeader> Headers = new ObservableCollection<WebRequestHeader>(WebRequestHeader.DefaultHeaders);
 
         public JsonUrlInput Input { get; set; }
 
@@ -90,20 +96,32 @@ namespace JsonDataContextDriver
                 }
             };
 
-            ExposeAsMethodCheckbox.Checked += (sender, args) => ParametersListView.Visibility = Visibility.Visible;
-            ExposeAsMethodCheckbox.Unchecked += (sender, args) => ParametersListView.Visibility = Visibility.Collapsed;
-
+            HeadersListView.SelectionChanged += (sender, args) => RemoveHeaderButton.IsEnabled = HeadersListView.SelectedItem != null;
+            AddNewHeaderButton.Click += (sender, args) =>
+            {
+                var h = new WebRequestHeader() {Name = "Name", Value = "Value"};
+                Headers.Add(h);
+                HeadersListView.SelectedItem = h;
+            };
+            RemoveHeaderButton.Click += (sender, args) =>
+            {
+                var h = HeadersListView.SelectedItem as WebRequestHeader;
+                Headers.Remove(h);
+            };
 
             CancelButton.Click += (sender, args) => DialogResult = false;
             OkButton.Click += (sender, args) =>
             {
                 _input.Name = NameTextBox.Text;
                 _input.Url = UrlTextBox.Text;
+                _input.Headers = Headers;
                 _input.GenerateAsMethod = ExposeAsMethodCheckbox.IsChecked == true;
 
                 Input = _input;
                 DialogResult = true;
             };
+
+            HeadersListView.ItemsSource = Headers;
 
             doValidation();
 
@@ -116,10 +134,25 @@ namespace JsonDataContextDriver
 
             NameTextBox.Text = _input.Name;
             UrlTextBox.Text = _input.Url;
+            Headers = input.Headers;
+
             ExposeAsMethodCheckbox.IsChecked = _input.GenerateAsMethod;
             ExposeAsPropertyCheckBox.IsChecked = !_input.GenerateAsMethod;
+
+            HeadersListView.ItemsSource = Headers;
         }
-        
+    }
+
+    [ImplementPropertyChanged]
+    public class WebRequestHeader
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+
+        public static List<WebRequestHeader> DefaultHeaders = new List<WebRequestHeader>
+        {
+            new WebRequestHeader { Name = "Accept", Value = "application/json; text/json"},
+        };
     }
 
     public class MockXViewModel
