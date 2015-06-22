@@ -203,8 +203,10 @@ namespace JsonDataContextDriver
 
         public override string ToString()
         {
+            var uri = new Uri(Url);
+
             return GenerateAsMethod
-                ? String.Format("{0}: {1} with parameters ({2})", this.Name, new Uri(this.Url).AbsolutePath,
+                ? String.Format("{0}: {1} with parameters ({2})", this.Name, uri.Host+uri.AbsolutePath,
                     String.Join(", ", GetUrlQueryStringParameters().Select(p => p.Item1)))
                 : String.Format("{0}: {1}", this.Name, this.Url);
         }

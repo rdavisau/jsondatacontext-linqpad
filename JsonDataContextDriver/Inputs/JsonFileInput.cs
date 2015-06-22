@@ -57,9 +57,9 @@ namespace JsonDataContextDriver
             switch (InputType)
             {
                 case JsonInputType.File:
-                    return InputPath;
+                    return String.Format("{1}: {0}", InputPath, Path.GetFileNameWithoutExtension(InputPath));
                 case JsonInputType.Directory:
-                    return Path.Combine(InputPath, Mask ?? "*.*") + (Recursive ? " + subfolders" : "");
+                    return String.Format("Search Folder: {0}", Path.Combine(InputPath, Mask ?? "*.*") + (Recursive ? " + subfolders" : ""));
                 default:
                     return "ERR";
             }

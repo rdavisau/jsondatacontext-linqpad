@@ -11,8 +11,8 @@ This driver allows you to select a set of JSON inputs from which a LINQPad data 
 
 ####Screenshots
 
-![](http://ryandavis.io/content/images/2015/06/cxn_dialog.png)
-![](http://ryandavis.io/content/images/2015/06/json_context-1.png)
+![](http://ryandavis.io/content/images/2015/06/json_connection_dialog_updated.png)
+![](http://ryandavis.io/content/images/2015/06/json_query-1.png)
 
 ####Planned Features:
 
