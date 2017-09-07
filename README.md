@@ -9,12 +9,12 @@ This driver allows you to select a set of JSON inputs from which a LINQPad data 
 - directories to search, with a filemask (e.g. \*.json, \*.\*) and the option for recursive enumeration
 - GET calls to urls that return json, exposed either as properties on the context, or methods with parameters mapped to querystring components in the url
 
-####Screenshots
+## Screenshots
 
-![](http://ryandavis.io/content/images/2015/06/json_connection_dialog_updated.png)
-![](http://ryandavis.io/content/images/2015/06/json_query-1.png)
+![json_connection_dialog_updated](http://ryandavis.io/content/images/2015/06/json_connection_dialog_updated.png)
+![json_query-1](http://ryandavis.io/content/images/2015/06/json_query-1.png)
 
-####Planned Features:
+## Planned Features
 
 * enhanced support for grabbing JSON from the world wide web (basic GET with headers is currently supported, support for POST planned)
 * support for caching of deserialised data, as well as programmatic invalidation of cached data
@@ -23,16 +23,17 @@ This driver allows you to select a set of JSON inputs from which a LINQPad data 
 * fixes for JSON data that it chokes on
 * better error handling and no modal error dialogs (please forgive me, gods of UX).
 
-####Considerations:
-#####Errors:
+## Considerations
+
+### Errors
 
 Errors encountered when processing individual sources will not typically prevent the construction of a full context; that is, 'bad' inputs will be ignored and the context is generated with 'good' ones. If the driver fails on inputs that you are able to share, please include them when [filing an issue](https://github.com/rdavisau/jsondatacontext-linqpad/issues).
 
-####Contributing:
+## Contributing
 
 Very welcome - fork, branch, PR :star2:
 
-####Attributions:
+## Attributions
 * JSON-to-CSharp provided by the [jsonclassgenerator project](http://jsonclassgenerator.codeplex.com/).
 * Dropdown button from [Extended WPF Toolkit](http://wpftoolkit.codeplex.com/)
 * JSON.NET
